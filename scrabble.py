@@ -57,6 +57,70 @@ class Player:
 class Tile:
     pass
 
+# draws all objects onto the background
+def draw_everything(background):
+    pos = pygame.mouse.get_pos()
+    tile_size = background.get_width()/15
+
+    # draw board
+    for i in range(15):
+        for j in range(15):
+            # draw letter tile
+            tile = pygame.Rect((0+tile_size*i, 0+tile_size*j, tile_size-1, tile_size-1))
+
+            # if cell has a letter
+            if board.board[i][j].letter != None:
+                pygame.draw.rect(background, (255, 200, 50), tile)
+                # draw letter on tile
+                font = pygame.font.Font(None, 24)
+                letter = font.render(board.board[i][j].letter, 1, (10, 10, 10))
+                background.blit(letter, (9+tile_size*i, 8+tile_size*j))
+                # draw score in bottom right corner of tile
+                font = pygame.font.Font(None, 12)
+                letter_score = font.render(str(letter_scores[board.board[i][j].letter]), 1, (10, 10, 10))
+                background.blit(letter_score, (20+tile_size*i, 20+tile_size*j))
+
+            # if cell is a letter multiplier
+            elif board.board[i][j].letter_mul != 1:
+                font = pygame.font.Font(None, 20)
+                # draw new tile color
+                pygame.draw.rect(background, (66, 99, 247), tile)
+                if board.board[i][j].letter_mul == 2:
+                    doub_letter = font.render('DL', 1, (10, 10, 10))
+                    background.blit(doub_letter, (5+tile_size*i, 10+tile_size*j))
+                elif board.board[i][j].letter_mul == 3:
+                    trip_letter = font.render('TL', 1, (10, 10, 10))
+                    background.blit(trip_letter, (5+tile_size*i, 10+tile_size*j))
+
+            # if cell is a word multiplier
+            elif board.board[i][j].word_mul != 1:
+                font = pygame.font.Font(None, 20)
+                # draw new tile color
+                pygame.draw.rect(background, (255, 87, 61), tile)
+                if board.board[i][j].word_mul == 2:
+                    doub_word = font.render('DW', 1, (10, 10, 10))
+                    background.blit(doub_word, (5+tile_size*i, 10+tile_size*j))
+                elif board.board[i][j].word_mul == 3:
+                    trip_word = font.render('TW', 1, (10, 10, 10))
+                    background.blit(trip_word, (5+tile_size*i, 10+tile_size*j))
+
+            # draw empty cell
+            else:
+                pygame.draw.rect(background, (76, 255, 88), tile)
+
+        # draw rack
+        for i in range(4, 11):
+            # draw tile in rack
+            tile = pygame.Rect((0+tile_size*i, 0+tile_size*16, tile_size-1, tile_size-1))
+            pygame.draw.rect(background, (255, 200, 50), tile)
+            # draw letter on tile
+            font = pygame.font.Font(None, 24)
+            letter = font.render(rack[i-4], 1, (10, 10, 10))
+            background.blit(letter, (9+tile_size*i, 8+tile_size*16))
+            # draw score in bottom right corner of tile
+            font = pygame.font.Font(None, 12)
+            letter_score = font.render(str(letter_scores[rack[i-4]]), 1, (10, 10, 10))
+            background.blit(letter_score, (20+tile_size*i, 20+tile_size*16))
 
 def main():
     pygame.init()
@@ -67,49 +131,10 @@ def main():
     background = background.convert()
     background.fill((188, 255, 243))
 
-    # font = pygame.font.Font(None, 36)
-    # text = font.render('Scrabble', 1, (188, 51, 35))
-    # textpos = text.get_rect(centerx=background.get_width()/2)
-    # background.blit(text, textpos)
-
     screen.blit(background, (0,0))
     pygame.display.flip()
 
-    for i in range(15):
-        for j in range(15):
-            tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
-            pygame.draw.rect(background, (76, 255, 88), tile)
-            if board.board[i][j].letter != None:
-                font = pygame.font.Font(None, 24)
-                letter = font.render(board.board[i][j].letter, 1, (10, 10, 10))
-                background.blit(letter, (10+30*i, 10+30*j))
-                pass
-            if board.board[i][j].letter_mul != 1:
-                font = pygame.font.Font(None, 20)
-                # draw new tile color
-                tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
-                pygame.draw.rect(background, (66, 99, 247), tile)
-                if board.board[i][j].letter_mul == 2:
-                    doub_letter = font.render('DL', 1, (10, 10, 10))
-                    background.blit(doub_letter, (5+30*i, 10+30*j))
-                elif board.board[i][j].letter_mul == 3:
-                    trip_letter = font.render('TL', 1, (10, 10, 10))
-                    background.blit(trip_letter, (5+30*i, 10+30*j))
-
-
-            if board.board[i][j].word_mul != 1:
-                font = pygame.font.Font(None, 20)
-                # draw new tile color255, 87, 61)
-                tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
-                pygame.draw.rect(background, (255, 87, 61), tile)
-                if board.board[i][j].word_mul == 2:
-                    doub_word = font.render('DW', 1, (10, 10, 10))
-                    background.blit(doub_word, (5+30*i, 10+30*j))
-                elif board.board[i][j].word_mul == 3:
-                    trip_word = font.render('TW', 1, (10, 10, 10))
-                    background.blit(trip_word, (5+30*i, 10+30*j))
-
-
+    draw_everything(background)
 
     running = True
     while running:
@@ -120,6 +145,8 @@ def main():
         screen.blit(background, (0,0))
         pygame.display.flip()
 
+        draw_everything(background)
+
     pygame.quit()
 
 
@@ -127,4 +154,7 @@ if __name__ == '__main__':
 
     board = Board()
     board.initBoard()
+    board.board[0][5].letter = 'A'
+    board.board[0][7].letter = 'Q'
+    rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
     main()
