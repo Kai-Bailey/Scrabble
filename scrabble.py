@@ -85,6 +85,7 @@ class Board:
         return score * word_multiplier
 
     def cross_check_sum(self, row, col):
+        pass
 
 
 
