@@ -77,9 +77,11 @@ class TrieTree():
         with open(file_name, mode='r') as file:
             for line in file:
                 line = line.rstrip("\n")
-                trie_tree.add_word(line)
+                self.add_word(line)
 
 
+    def left_part(self, partial_word, node, limit):
+        pass
 
     def valid_word(self, word):
         """
