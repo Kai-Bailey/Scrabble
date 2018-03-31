@@ -1,5 +1,6 @@
 import pygame
 import random
+import Trie
 from pygame.locals import *
 
 letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
@@ -23,6 +24,12 @@ class Board:
 
 
     def initBoard(self):
+        """
+        Initializes the playing board by making self.board a 15x15 matrix. The matrix is represented by a
+        list of lists and each element is an object of class cell. Based on their position on the board cells
+        cells can be initialized as double/triple word or double/triple letter. 
+        """
+
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14) ])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
@@ -40,6 +47,7 @@ class Board:
                     self.board[i].append(Cell(None, 2, 1))
                 else:
                     self.board[i].append(Cell(None, 1, 1))
+
 
     def draw_random_tile(self):
         """
@@ -62,6 +70,7 @@ class Board:
         self.number_tiles -= 1
         return letter
 
+
     def compute_score(self, cells_played):
         """
         Given a list of cells will return the score of the word within those cells.
@@ -74,6 +83,9 @@ class Board:
             word_multiplier *= cell.word_mul
 
         return score * word_multiplier
+
+    def cross_check_sum(self, row, col):
+
 
 
 class Cell:
