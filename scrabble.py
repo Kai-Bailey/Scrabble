@@ -18,6 +18,10 @@ class Board:
         # "Bag of Tiles" left for the players to randomly choose from
         self.tiles = {'E':12, 'A':9, 'I':9, 'O':8, 'N':6, 'R':6, 'T':6, 'L':4, 'S':4, 'U':4, 'D':4, 'G':3, 'B':2, 'C':2, 'M':2, 'P':2, 'F':2, 'H':2, 'V':2, 'W':2, 'Y':2, 'K':1, 'J':1, 'X':1, 'Q':1, 'Z':1}
         self.number_tiles = 98
+
+        self.initBoard()
+
+
     def initBoard(self):
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14) ])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
@@ -75,7 +79,23 @@ class Cell:
         return self.letter
 
 class Player:
-    pass
+    def __init__(self):
+        self.rack = []
+        self.score = 0
+
+class Human:
+    def __init__(self):
+        super().__init__()
+
+    def turn(self):
+        pass
+
+class Computer:
+    def __init__(self):
+        super().__init__()
+
+    def turn(self):
+        pass
 
 class Tile:
     pass
