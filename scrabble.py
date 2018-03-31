@@ -1,13 +1,10 @@
 import pygame
 from pygame.locals import *
 
-<<<<<<< HEAD
 letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                 'H': 4, 'I': 1, 'J':8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1,
-                'P': 3, 'Q': 10, 'R': 1, 'S': 1 'T': 1, 'U':1, 'V': 4, 'W': 4,
+                'P': 3, 'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U':1, 'V': 4, 'W': 4,
                  'X': 8, 'Y': 4, 'Z': 10}
-=======
->>>>>>> 1b73126ed4547bd42b23a8e4e6c6cd87eaf3ab5f
 
 class Board:
     def __init__(self):
@@ -17,7 +14,7 @@ class Board:
         self.players = []
         # Index in list players of whos turn it is
         self.turn = 0
-        
+
     def initBoard(self):
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14) ])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
@@ -27,7 +24,7 @@ class Board:
             self.board.append([])
             for j in range(15):
                 if (i,j) in triple_word:
-                    self.board[i].append(Cell(None, 1, 3))                        
+                    self.board[i].append(Cell(None, 1, 3))
                 elif (i,j) in double_word:
                     self.board[i].append(Cell(None, 1, 2))
                 elif (i,j) in triple_letter:
@@ -63,7 +60,7 @@ class Tile:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((700, 500))
+    screen = pygame.display.set_mode((500, 600))
     pygame.display.set_caption('Scrabble')
 
     background = pygame.Surface(screen.get_size())
@@ -78,21 +75,40 @@ def main():
     screen.blit(background, (0,0))
     pygame.display.flip()
 
-
-    # tile = pygame.Surface((30, 30))
-    # tile.fill((239, 188, 79))
-    # background.blit(tile, (0, 0))
-
-
-    font = pygame.font.Font(None, 13)
-    letter = font.render('A', 1, (10, 10, 10))
-    letterpos = letter.get_rect(centerx=tile.get_width()/2)
-    tile.blit(letter, (0,0))
-
     for i in range(15):
         for j in range(15):
-            pygame.draw.rect(background, (70, 96, 91), (0+30*i, 0+30*j, 30, 30), 3)
-            
+            tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
+            pygame.draw.rect(background, (76, 255, 88), tile)
+            if board.board[i][j].letter != None:
+                font = pygame.font.Font(None, 24)
+                letter = font.render(board.board[i][j].letter, 1, (10, 10, 10))
+                background.blit(letter, (10+30*i, 10+30*j))
+                pass
+            if board.board[i][j].letter_mul != 1:
+                font = pygame.font.Font(None, 20)
+                # draw new tile color
+                tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
+                pygame.draw.rect(background, (66, 99, 247), tile)
+                if board.board[i][j].letter_mul == 2:
+                    doub_letter = font.render('DL', 1, (10, 10, 10))
+                    background.blit(doub_letter, (5+30*i, 10+30*j))
+                elif board.board[i][j].letter_mul == 3:
+                    trip_letter = font.render('TL', 1, (10, 10, 10))
+                    background.blit(trip_letter, (5+30*i, 10+30*j))
+
+
+            if board.board[i][j].word_mul != 1:
+                font = pygame.font.Font(None, 20)
+                # draw new tile color255, 87, 61)
+                tile = pygame.Rect((0+30*i, 0+30*j, 29, 29))
+                pygame.draw.rect(background, (255, 87, 61), tile)
+                if board.board[i][j].word_mul == 2:
+                    doub_word = font.render('DW', 1, (10, 10, 10))
+                    background.blit(doub_word, (5+30*i, 10+30*j))
+                elif board.board[i][j].word_mul == 3:
+                    trip_word = font.render('TW', 1, (10, 10, 10))
+                    background.blit(trip_word, (5+30*i, 10+30*j))
+
 
 
     running = True
@@ -108,7 +124,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
 
     board = Board()
     board.initBoard()
+    main()
