@@ -62,6 +62,19 @@ class Board:
         self.number_tiles -= 1
         return letter
 
+    def compute_score(self, cells_played):
+        """
+        Given a list of cells will return the score of the word within those cells.
+        """
+        score = 0
+        word_multiplier = 1
+        for cell in cells_played:
+ 
+            score += letter_scores[cell.letter] * cell.letter_mul
+            word_multiplier *= cell.word_mul
+
+        return score * word_multiplier
+
 
 class Cell:
     def __init__(self, letter, letter_mul, word_mul):
