@@ -83,7 +83,7 @@ class TrieTree():
 
     def valid_word(self, word):
         """
-        Checks if the a word is valid by traversing the trie tree.
+        Checks if the a word is valid by traversing the trie tree. Word is a string.
         """
         curr_node = self.root
         

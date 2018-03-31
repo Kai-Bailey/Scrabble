@@ -22,7 +22,6 @@ class Board:
 
         self.initBoard()
 
-
     def initBoard(self):
         """
         Initializes the playing board by making self.board a 15x15 matrix. The matrix is represented by a
@@ -38,15 +37,15 @@ class Board:
             self.board.append([])
             for j in range(15):
                 if (i,j) in triple_word:
-                    self.board[i].append(Cell(None, 1, 3))
+                    self.board[i].append(Cell(None, 1, 3, i, j))
                 elif (i,j) in double_word:
-                    self.board[i].append(Cell(None, 1, 2))
+                    self.board[i].append(Cell(None, 1, 2, i, j))
                 elif (i,j) in triple_letter:
-                    self.board[i].append(Cell(None, 3, 1))
+                    self.board[i].append(Cell(None, 3, 1, i, j))
                 elif (i,j) in double_letter:
-                    self.board[i].append(Cell(None, 2, 1))
+                    self.board[i].append(Cell(None, 2, 1, i, j))
                 else:
-                    self.board[i].append(Cell(None, 1, 1))
+                    self.board[i].append(Cell(None, 1, 1, i, j))
 
 
     def draw_random_tile(self):
@@ -83,18 +82,60 @@ class Board:
             word_multiplier *= cell.word_mul
 
         return score * word_multiplier
+ 
+        
+    def check_sum_single(self, check_cell, cell, orientation):
 
-    def cross_check_sum(self, row, col):
-        pass
+        # Tile already place their no need to compute cross checks and sums
+        if check_cell.letter != None:
+            return
 
+        check_cell.anchor = True
+
+        if orientation == 'L':
+            curr_cell = self.board.tiles[row][col+1]
+            postfix = []
+            while curr_cell.letter != None:
+                postfix.append(curr_cell.letter)
+                curr_cell = self.board.tiles[row][col+1]
+
+
+    def cross_checks_sums(self, cells_played):
+        """
+        Given a list of cells, will update the cross checks and cross sums for all of
+        empty adjacent cells. Make sure the list cells_played includes cells already on
+        the board if the were a part of the word played.
+        """
+        
+        for cell in cells_played:
+            row = cell.row
+            col = cell.col
+            # Check the cell above
+            if cell.row > 0:
+                check_sum_single(self.board.tiles[row-1][col], cell, 'U')
+            # Check the cell to the below
+            if cell.row < 14:
+                check_sum_single(self.board.tiles[row+1][col], cell, 'D')
+            # Check the cell to the left
+            if cell.col > 0:
+                check_sum_single(self.board.tiles[row][col-1], cell, 'L')
+            # Check the cell to the right
+            if cell.col < 14:
+                check_sum_single(self.board.tiles[row][col+1], cell, 'R')
 
 
 class Cell:
-    def __init__(self, letter, letter_mul, word_mul):
+    def __init__(self, letter, letter_mul, word_mul, row, col):
         self.letter = letter
         self.word_mul = word_mul
         self.letter_mul = letter_mul
-
+        self.row = row
+        self.col = col
+        # True of the cell is adjacent to a cell with a letter in it
+        self.anchor = False
+        # The valid letters that can be placed in this cell
+        self.cross_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+    
     def score(self):
         return letter_scores[self.letter]*self.letter_mul
 
@@ -125,6 +166,25 @@ class Computer:
 
 class Tile:
     pass
+
+
+def check_valid(self, trie, cells_played):
+    """
+    Given a list of the cells played will check if the word is valid. The word
+    is only valid if each letter played is in the set cross_check for that given 
+    cell and the word as a whole is in the dictionary (trie tree).
+    """
+    word = []
+    for cell in cells_played:
+        word.append(cell.letter)
+        if cell.letter not in cell.cross_check:
+            return False
+    
+    if trie.valid_word(word):
+        return True
+    else:
+        return False  
+
 
 # draws all objects onto the background
 def draw_everything(background):
