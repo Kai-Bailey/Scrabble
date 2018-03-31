@@ -1,4 +1,5 @@
 import pygame
+import random
 from pygame.locals import *
 
 letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
@@ -14,7 +15,9 @@ class Board:
         self.players = []
         # Index in list players of whos turn it is
         self.turn = 0
-
+        # "Bag of Tiles" left for the players to randomly choose from
+        self.tiles = {'E':12, 'A':9, 'I':9, 'O':8, 'N':6, 'R':6, 'T':6, 'L':4, 'S':4, 'U':4, 'D':4, 'G':3, 'B':2, 'C':2, 'M':2, 'P':2, 'F':2, 'H':2, 'V':2, 'W':2, 'Y':2, 'K':1, 'J':1, 'X':1, 'Q':1, 'Z':1}
+        self.number_tiles = 98
     def initBoard(self):
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14) ])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
@@ -33,8 +36,27 @@ class Board:
                     self.board[i].append(Cell(None, 2, 1))
                 else:
                     self.board[i].append(Cell(None, 1, 1))
-                print(self.board[i][j].letter_mul, end=" ")
-            print()
+
+    def draw_random_tile(self):
+        """
+        Draw a random tile from the "bag of tiles". Returns the leter that was drawn
+        and removes it from the bag of tiles.
+        """
+        rand_ind = random.randint(1, self.number_tiles-1)
+        
+        sum_letters = 0
+        for let, num_left in self.tiles.items():
+            sum_letters += num_left
+            if sum_letters > rand_ind:
+                letter = let
+                if self.tiles[let] == 1:
+                    self.tiles.pop(let)
+                else:
+                    self.tiles[let] -= 1
+                break
+
+        self.number_tiles -= 1
+        return letter
 
 
 class Cell:
@@ -128,4 +150,7 @@ if __name__ == '__main__':
 
     board = Board()
     board.initBoard()
+
     main()
+
+
