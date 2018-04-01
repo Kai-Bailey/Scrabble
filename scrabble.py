@@ -103,7 +103,7 @@ class Board:
 
         # Convert the list of letters to a string
         word = ''.join(word)
-        word = word.lower()
+        word = word.upper()
 
         if self.dictionary.valid_word(word):
             return True
@@ -119,11 +119,24 @@ class Board:
         """
         score = 0
         word_multiplier = 1
-        for cell in cells_played:
 
-            score += letter_scores[cell.letter] * cell.letter_mul
-            score += cell.check_sum
-            word_multiplier *= cell.word_mul
+        if len(cells_played) == 1:
+            for cell in cells_played:
+                score += letter_scores[cell.letter] * cell.letter_mul
+                score += cell.down_sum
+                score += cell.across_sum
+                word_multiplier *= cell.word_mul
+        elif cells_played[0].row == cells_played[1].row:
+                for cell in cells_played:
+                    score += letter_scores[cell.letter] * cell.letter_mul
+                    score += cell.down_sum
+                    word_multiplier *= cell.word_mul
+        else:
+            for cell in cells_played:
+                score += letter_scores[cell.letter] * cell.letter_mul
+                score += cell.across_sum
+                word_multiplier *= cell.word_mul
+    
 
         return score * word_multiplier
 
@@ -132,22 +145,21 @@ class Board:
         """
         Given a list of cells will return the score of the word within those cells. Used
         internally to update the cross_sum in the function check_sum_single. Ignores the
-        check_sum of the current cells.
+        check_sum of the current cells and letter/word multipliers.
         """
         score = 0
-        word_multiplier = 1
+
         for cell in cells_played:
+            score += letter_scores[cell.letter]
+   
 
-            score += letter_scores[cell.letter] * cell.letter_mul
-            word_multiplier *= cell.word_mul
-
-        return score * word_multiplier
+        return score
 
 
     def across_check(self, row):
         for cell in self.board[row]:
             if cell.letter != None:
-                return
+                continue
             row = cell.row
             col = cell.col
             cell.anchor = True
@@ -157,7 +169,7 @@ class Board:
             while col > 0:
                 col -= 1
                 cur_cell = self.board[row][col]
-                if cur_cell != None:
+                if cur_cell.letter != None:
                     prefix.append(cur_cell.letter)
                     prefix_cell.append(cur_cell)
                 else:
@@ -171,20 +183,28 @@ class Board:
             while col < 14:
                 col += 1
                 cur_cell = self.board[row][col]
-                if cur_cell != None:
+                if cur_cell.letter != None:
                     suffix.append(cur_cell.letter)
                     suffix_cell.append(cur_cell)
                 else:
                     break
 
-            cell.check_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            prefix = ''.join(prefix)
+            prefix = prefix.upper()
+            suffix = ''.join(suffix)
+            suffix = suffix.upper()
+
+            if prefix == '' and suffix == '':
+                continue
+
+            cell.across_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
             self.dictionary.update_across_check(prefix, suffix, cell)
 
     def down_check(self, col):
         for row in self.board:
-            cell = self.board[row][col]
+            cell = row[col]
             if cell.letter != None:
-                return
+                continue
             row = cell.row
             col = cell.col
             cell.anchor = True
@@ -194,7 +214,7 @@ class Board:
             while row > 0:
                 row -= 1
                 cur_cell = self.board[row][col]
-                if cur_cell != None:
+                if cur_cell.letter != None:
                     prefix.append(cur_cell.letter)
                     prefix_cell.append(cur_cell)
                 else:
@@ -208,13 +228,21 @@ class Board:
             while row < 14:
                 row += 1
                 cur_cell = self.board[row][col]
-                if cur_cell != None:
+                if cur_cell.letter != None:
                     suffix.append(cur_cell.letter)
                     suffix_cell.append(cur_cell)
                 else:
                     break
 
-            cell.check_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            prefix = ''.join(prefix)
+            prefix = prefix.upper()
+            suffix = ''.join(suffix)
+            suffix = suffix.upper()
+
+            if prefix == '' and suffix == '':
+                continue
+
+            cell.down_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
             self.dictionary.update_down_check(prefix, suffix, cell)
 
 
@@ -235,7 +263,12 @@ class Board:
             self.down_check(cells_played[0].col)
             for cell in cells_played:
                 self.across_check(cell.row)
-        
+    
+    def placed_cell_cleanup(self, cells_played):
+        for cell in cells_played:
+            cell.across_sum = 0
+            cell.down_sum = 0
+            cell.anchor = False
 
 
 class Cell:
@@ -252,7 +285,8 @@ class Cell:
         self.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
         # If a letter is played there in this cell the additional points
         # it will get from connecting to additional words
-        self.cross_sum = 0
+        self.across_sum = 0
+        self.down_sum = 0
 
     def score(self):
         return letter_scores[self.letter]*self.letter_mul
@@ -301,7 +335,7 @@ class Game:
     def __init__(self, screen, background):
         self.screen = screen
         self.surface = background
-        self.board = Board('20k.txt')
+        self.board = Board('dictionary.txt')
         self.player1 = Player(self.board)
         self.player2 = Player(self.board)
         self.running = True
@@ -309,13 +343,6 @@ class Game:
         self.text_color = (10, 10, 10)
 
     def play_game(self):
-        self.board.board[0][5].letter = 'A'
-        self.board.board[0][7].letter = 'Q'
-        self.player1.rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
-        self.player1.place_tile(1, (0, 0))
-        self.draw_board()
-        self.draw_rack()
-        self.draw()
 
         self.board.board[10][8].letter = 'H'
         self.board.board[10][9].letter = 'E'
@@ -325,7 +352,39 @@ class Game:
 
         cells_played = [self.board.board[10][8], self.board.board[10][9], self.board.board[10][10], \
         self.board.board[10][11], self.board.board[10][12]]
-        print(self.board.check_valid(cells_played))
+        # Returns a True if the cells played were true and false if they were not
+        valid = self.board.check_valid(cells_played)
+        print(valid)
+        # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        self.board.cross_checks_sums(cells_played)
+        # Returns the score of the tiles played
+        score = self.board.compute_score(cells_played)
+        print(score)
+        # Run after previous commands
+        self.board.placed_cell_cleanup(cells_played)
+
+        self.board.board[9][9].letter = 'T'
+        self.board.board[11][9].letter = 'A'
+        self.board.board[12][9].letter = 'B'
+
+        cells_played = [self.board.board[9][9], self.board.board[10][9], self.board.board[11][9], self.board.board[12][9]]
+        # Returns a True if the cells played were true and false if they were not
+        valid = self.board.check_valid(cells_played)
+        print(valid)
+        # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        self.board.cross_checks_sums(cells_played)
+        # Returns the score of the tiles played
+        score = self.board.compute_score(cells_played)
+        print(score)
+        # Run after previous commands
+        self.board.placed_cell_cleanup(cells_played)
+
+        self.player1.rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
+        self.player1.place_tile(1, (0, 0))
+        self.draw_board()
+        self.draw_rack()
+        self.draw()
+
 
         while self.running:
             self.handle_event()
@@ -416,24 +475,6 @@ class Game:
 
     def update(self):
         pass
-
-
-def check_valid(self, trie, cells_played):
-    """
-    Given a list of the cells played will check if the word is valid. The word
-    is only valid if each letter played is in the set cross_check for that given
-    cell and the word as a whole is in the dictionary (trie tree).
-    """
-    word = []
-    for cell in cells_played:
-        word.append(cell.letter)
-        if cell.letter not in cell.cross_check:
-            return False
-
-    if trie.valid_word(word):
-        return True
-    else:
-        return False
 
 
 def main():

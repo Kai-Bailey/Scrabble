@@ -89,10 +89,12 @@ class TrieTree():
 
         for letter in alphabet:
             if letter not in curr_node.children:
-                cell.down_check.remove(letter)
+                if letter in cell.down_check:
+                    cell.down_check.remove(letter)
                 continue
             if not self.valid_word(suffix, curr_node.children[letter]):
-                cell.down_check.remove(letter)
+                if letter in cell.down_check:
+                    cell.down_check.remove(letter)
 
     
     def update_across_check(self, prefix, suffix, cell):
@@ -104,10 +106,12 @@ class TrieTree():
 
         for letter in alphabet:
             if letter not in curr_node.children:
-                cell.across_check.remove(letter)
+                if letter in cell.across_check:
+                    cell.across_check.remove(letter)
                 continue
             if not self.valid_word(suffix, curr_node.children[letter]):
-                cell.across_check.remove(letter)
+                if letter in cell.across_check:
+                    cell.across_check.remove(letter)
 
 
     def left_part(self, partial_word, node, limit):
@@ -137,6 +141,13 @@ class TrieTree():
             if not_found:
                 return False
         
+        # If no word is being valid just ensure the starting node is terminated
+        if len(word) == 0:
+            if curr_node.terminate:
+                return True
+            else:
+                return False
+
         # Check that the last node has terminate
         letter = word[-1]
         # for child in curr_node.children:
@@ -148,31 +159,13 @@ class TrieTree():
 
 
 if __name__ == "__main__":
-    # trie_tree = TrieTree()
-    # trie_tree.trie_from_txt("20k.txt")
-    # print(trie_tree.valid_word("hello"))
-    # print(trie_tree.valid_word("test"))
-    # print(trie_tree.valid_word("testing"))
-    # print(trie_tree.valid_word("false"))
-    # print(trie_tree.valid_word("tests"))
-    # print(trie_tree.valid_word("hippoptamusess"))
-    # print(trie_tree.valid_word("isvalid"))
+    trie_tree = TrieTree()
+    trie_tree.trie_from_txt("dictionary.txt")
+    print(trie_tree.valid_word("HELLO"))
+    print(trie_tree.valid_word("TEST"))
+    print(trie_tree.valid_word("TESTING"))
+    print(trie_tree.valid_word("FALSE"))
+    print(trie_tree.valid_word("THISIS"))
+    print(trie_tree.valid_word("HIPPOPATMUSESES"))
+    print(trie_tree.valid_word("DEFNNOT"))
     
-    
-    
-    tree = TrieTree()
-    tree.add_word("Hello")
-    tree.add_word("Helping")
-    tree.add_word("Test")
-    print(tree.valid_word("Hello"))
-    print(tree.valid_word("Cat"))
-    print(tree.valid_word("Test"))
-    print(tree.valid_word("Helping"))
-    print(tree.valid_word("Help"))
-    print(tree.valid_word("HelpingMe"))
-    tree.add_word("Kittens")
-    tree.add_word("Kit")
-    print(tree.valid_word("Kit"))
-    print(tree.valid_word("Kitten"))
-    print(tree.valid_word("Kittens"))
-    print(tree.valid_word("Kitt"))
