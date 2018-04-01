@@ -79,13 +79,27 @@ class Board:
         is only valid if each letter played is in the set cross_check for that given 
         cell and the word as a whole is in the dictionary (trie tree). 
         """
+
+        if len(cells_played) == 1:
+            cell = cells_played[0]
+            if cell.letter in cell.across_check and cell.letter in cell.down_check:
+                return True
+            else:
+                return False
+      
         word = []
 
-        for cell in cells_played:
-            word.append(cell.letter)
-            if cell.letter not in cell.cross_check:
-                return False
-        
+        if cells_played[0].row == cells_played[1].row:
+            for cell in cells_played:
+                word.append(cell.letter)
+                if cell.letter not in cell.down_check:
+                    return False
+        else:
+            for cell in cells_played:
+                word.append(cell.letter)
+                if cell.letter not in cell.across_check:
+                    return False
+
         # Convert the list of letters to a string
         word = ''.join(word)
         word = word.lower()
@@ -99,6 +113,25 @@ class Board:
     def compute_score(self, cells_played):
         """
         Given a list of cells will return the score of the word within those cells.
+        Including any addition words that it connects to which are accounted for by
+        the check_sum of each cell.
+        """
+        score = 0
+        word_multiplier = 1
+        for cell in cells_played:
+
+            score += letter_scores[cell.letter] * cell.letter_mul
+            score += cell.check_sum
+            word_multiplier *= cell.word_mul
+
+        return score * word_multiplier
+
+
+    def compute_score_already_placed(self, cells_played):
+        """
+        Given a list of cells will return the score of the word within those cells. Used
+        internally to update the cross_sum in the function check_sum_single. Ignores the 
+        check_sum of the current cells.
         """
         score = 0
         word_multiplier = 1
@@ -110,53 +143,84 @@ class Board:
         return score * word_multiplier
 
 
-    def check_sum_single(self, check_cell, cell, orientation):
-        """
-        Given the a cell and its orientation to newly placed adjacent cell will update
-        the cross_check and cross_sum of check_cell
-        """
-        # Tile already placed their no need to compute cross checks and sums
-        if check_cell.letter != None:
-            return
+    def row_check(self, row):
+        for cell in self.board[row]:
+            if cell.letter != None:
+                return
+            row = cell.row
+            col = cell.col
+            cell.anchor = True
 
-        check_cell.anchor = True
-        row = check_cell.row
-        col = check_cell.col
+            prefix = []
+            prefix_cell = []
+            while col > 0:
+                col -= 1
+                cur_cell = self.board[row][col]
+                if cur_cell != None:
+                    prefix.append(cur_cell.letter)
+                    prefix_cell.append(cur_cell)
+                else:
+                    break
+            prefix.reverse()
+            
+            row = cell.row
+            col = cell.col
+            suffix = []
+            suffix_cell = []
+            while col < 14:
+                col += 1
+                cur_cell = self.board[row][col]
+                if cur_cell != None:
+                    suffix.append(cur_cell.letter)
+                    suffix_cell.append(cur_cell)
+                else:
+                    break
 
-        if orientation == 'L':
-            curr_cell = self.board[row][col+1]
-            postfix = []
-            while curr_cell.letter != None:
-                postfix.append(curr_cell.letter)
-                curr_cell = self.board[row][col+1]
-        elif orientation == 'U':
-            curr_cell = self.board[row+1][col]
-            postfix = []
-            while curr_cell.letter != None:
-                postfix.append(curr_cell.letter)
-                curr_cell = self.board[row+1][col]
-        elif orientation == 'R':
-            curr_cell = self.board[row][col-1]
+            cell.check_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            self.dictionary.update_across_check(prefix, suffix, cell)
+
+    def down_check(self, col):
+        for row in self.board:
+            cell = self.board[row][col]
+            if cell.letter != None:
+                return
+            row = cell.row
+            col = cell.col
+            cell.anchor = True
+
             prefix = []
-            while curr_cell.letter != None:
-                prefix.append(curr_cell.letter)
-                curr_cell = self.board[row][col-1]
+            prefix_cell = []
+            while row > 0:
+                row -= 1
+                cur_cell = self.board[row][col]
+                if cur_cell != None:
+                    prefix.append(cur_cell.letter)
+                    prefix_cell.append(cur_cell)
+                else:
+                    break
             prefix.reverse()
-        else:
-            curr_cell = self.board[row-1][col]
-            prefix = []
-            while curr_cell.letter != None:
-                prefix.append(curr_cell.letter)
-                curr_cell = self.board[row-1][col]
-            prefix.reverse()
+            
+            row = cell.row
+            col = cell.col
+            suffix = []
+            suffix_cell = []
+            while row < 14:
+                row += 1
+                cur_cell = self.board[row][col]
+                if cur_cell != None:
+                    suffix.append(cur_cell.letter)
+                    suffix_cell.append(cur_cell)
+                else:
+                    break
+
+            cell.check_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            self.dictionary.update_down_check(prefix, suffix, cell)
 
         
-
     def cross_checks_sums(self, cells_played):
         """
         Given a list of cells, will update the cross checks and cross sums for all of
-        empty adjacent cells. Make sure the list cells_played includes cells already on
-        the board if they were a part of the word played.
+        empty adjacent cells.
         """
 
         for cell in cells_played:
@@ -164,16 +228,16 @@ class Board:
             col = cell.col
             # Check the cell above
             if cell.row > 0:
-                self.check_sum_single(self.board[row-1][col], cell, 'U')
+                self.check_sum_single(self.board[row-1][col], cell, 'DownMove')
             # Check the cell to the below
             if cell.row < 14:
-                self.check_sum_single(self.board[row+1][col], cell, 'D')
+                self.check_sum_single(self.board[row+1][col], cell, 'DownMove')
             # Check the cell to the left
             if cell.col > 0:
-                self.check_sum_single(self.board[row][col-1], cell, 'L')
+                self.check_sum_single(self.board[row][col-1], cell, 'AcrossMove')
             # Check the cell to the right
             if cell.col < 14:
-                self.check_sum_single(self.board[row][col+1], cell, 'R')
+                self.check_sum_single(self.board[row][col+1], cell, 'AcrossMove')
 
 
 class Cell:
@@ -186,7 +250,11 @@ class Cell:
         # True of the cell is adjacent to a cell with a letter in it
         self.anchor = False
         # The valid letters that can be placed in this cell
-        self.cross_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+        self.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+        self.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+        # If a letter is played there in this cell the additional points
+        # it will get from connecting to additional words
+        self.cross_sum = 0
 
     def score(self):
         return letter_scores[self.letter]*self.letter_mul
