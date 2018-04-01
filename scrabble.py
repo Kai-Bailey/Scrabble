@@ -9,6 +9,7 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                  'X': 8, 'Y': 4, 'Z': 10}
 
 class Board:
+    
     def __init__(self, dict_name):
         # Array of board each inner list is a row
         self.board = []
@@ -32,7 +33,7 @@ class Board:
         cells can be initialized as double/triple word or double/triple letter.
         """
 
-        triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14) ])
+        triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14)])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
         double_letter = set([(0,3), (0,11), (2,6), (2,8), (3,0), (3,7), (3,14), (6,2), (6,6), (6,8), (6,12), (7,3), (7,11), (8,2), (8,6), (8,8), (8,12), (14,3), (14,11), (12,6), (12,8), (11,0), (11,7), (11,14)])
@@ -143,7 +144,7 @@ class Board:
         return score * word_multiplier
 
 
-    def row_check(self, row):
+    def across_check(self, row):
         for cell in self.board[row]:
             if cell.letter != None:
                 return
@@ -223,22 +224,18 @@ class Board:
         empty adjacent cells.
         """
 
-        for cell in cells_played:
-            row = cell.row
-            col = cell.col
-            # Check the cell above
-            if cell.row > 0:
-                self.check_sum_single(self.board[row-1][col], cell, 'DownMove')
-            # Check the cell to the below
-            if cell.row < 14:
-                self.check_sum_single(self.board[row+1][col], cell, 'DownMove')
-            # Check the cell to the left
-            if cell.col > 0:
-                self.check_sum_single(self.board[row][col-1], cell, 'AcrossMove')
-            # Check the cell to the right
-            if cell.col < 14:
-                self.check_sum_single(self.board[row][col+1], cell, 'AcrossMove')
-
+        if len(cells_played) == 1:
+            self.down_check(cells_played[0].col)
+            self.across_check(cells_played[0].row)
+        elif cells_played[0].row == cells_played[1].row:
+            self.across_check(cells_played[0].row)
+            for cell in cells_played:
+                self.down_check(cell.col)
+        else:
+            self.down_check(cells_played[0].col)
+            for cell in cells_played:
+                self.across_check(cell.row)
+        
 
 class Cell:
     def __init__(self, letter, letter_mul, word_mul, row, col):
@@ -391,6 +388,9 @@ if __name__ == '__main__':
     board.board[10][10].letter = 'L'
     board.board[10][11].letter = 'L'
     board.board[10][12].letter = 'O'
+    board.board[9][9].letter = 'T'
+    board.board[11][9].letter = 'A'
+    board.board[12][9].letter = 'M'
 
     cells_played = [board.board[10][8], board.board[10][9], board.board[10][10], board.board[10][11], board.board[10][12]]
     print(board.check_valid(cells_played))
