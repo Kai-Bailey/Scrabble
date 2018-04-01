@@ -23,7 +23,7 @@ class Board:
 
         self.dictionary = Trie.TrieTree()
         self.dictionary.trie_from_txt(dict_name)
-        
+
         self.initBoard()
 
     def initBoard(self):
@@ -77,8 +77,8 @@ class Board:
     def check_valid(self, cells_played):
         """
         Given a list of the cells played will check if the word is valid. The word
-        is only valid if each letter played is in the set cross_check for that given 
-        cell and the word as a whole is in the dictionary (trie tree). 
+        is only valid if each letter played is in the set cross_check for that given
+        cell and the word as a whole is in the dictionary (trie tree).
         """
 
         if len(cells_played) == 1:
@@ -87,7 +87,7 @@ class Board:
                 return True
             else:
                 return False
-      
+
         word = []
 
         if cells_played[0].row == cells_played[1].row:
@@ -108,7 +108,7 @@ class Board:
         if self.dictionary.valid_word(word):
             return True
         else:
-            return False  
+            return False
 
 
     def compute_score(self, cells_played):
@@ -131,7 +131,7 @@ class Board:
     def compute_score_already_placed(self, cells_played):
         """
         Given a list of cells will return the score of the word within those cells. Used
-        internally to update the cross_sum in the function check_sum_single. Ignores the 
+        internally to update the cross_sum in the function check_sum_single. Ignores the
         check_sum of the current cells.
         """
         score = 0
@@ -163,7 +163,7 @@ class Board:
                 else:
                     break
             prefix.reverse()
-            
+
             row = cell.row
             col = cell.col
             suffix = []
@@ -200,7 +200,7 @@ class Board:
                 else:
                     break
             prefix.reverse()
-            
+
             row = cell.row
             col = cell.col
             suffix = []
@@ -217,7 +217,7 @@ class Board:
             cell.check_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
             self.dictionary.update_down_check(prefix, suffix, cell)
 
-        
+
     def cross_checks_sums(self, cells_played):
         """
         Given a list of cells, will update the cross checks and cross sums for all of
@@ -236,6 +236,7 @@ class Board:
             for cell in cells_played:
                 self.across_check(cell.row)
         
+
 
 class Cell:
     def __init__(self, letter, letter_mul, word_mul, row, col):
@@ -263,9 +264,21 @@ class Cell:
         return self.letter
 
 class Player:
-    def __init__(self):
+    def __init__(self, board):
         self.rack = []
         self.score = 0
+        self.board = board
+
+    # place a tile on the board
+    def place_tile(self, rack_tile, cell):
+        self.board.board[cell[0]][cell[1]].letter = self.rack[rack_tile]
+        self.rack[rack_tile] = 'Z' # tile is null for now
+        pass
+
+
+    def play(self):
+
+        pass
 
 class Human:
     def __init__(self):
@@ -284,72 +297,144 @@ class Computer:
 class Tile:
     pass
 
+class Game:
+    def __init__(self, screen, background):
+        self.screen = screen
+        self.surface = background
+        self.board = Board('20k.txt')
+        self.player1 = Player(self.board)
+        self.player2 = Player(self.board)
+        self.running = True
+        self.tile_size = self.surface.get_width()/15
+        self.text_color = (10, 10, 10)
 
-# draws all objects onto the background
-def draw_everything(background):
-    pos = pygame.mouse.get_pos()
-    tile_size = background.get_width()/15
-    text_color = (10, 10, 10)
+    def play_game(self):
+        self.board.board[0][5].letter = 'A'
+        self.board.board[0][7].letter = 'Q'
+        self.player1.rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
+        self.player1.place_tile(1, (0, 0))
+        self.draw_board()
+        self.draw_rack()
+        self.draw()
 
-    # draw board
-    for i in range(15):
-        for j in range(15):
-            # draw letter tile
-            tile = pygame.Rect((0+tile_size*i, 0+tile_size*j, tile_size-1, tile_size-1))
+        self.board.board[10][8].letter = 'H'
+        self.board.board[10][9].letter = 'E'
+        self.board.board[10][10].letter = 'L'
+        self.board.board[10][11].letter = 'L'
+        self.board.board[10][12].letter = 'O'
 
-            # if cell has a letter
-            if board.board[j][i].letter != None:
-                pygame.draw.rect(background, (255, 200, 50), tile)
-                # draw letter on tile
-                font = pygame.font.Font(None, 24)
-                letter = font.render(board.board[j][i].letter, 1, text_color)
-                background.blit(letter, (9+tile_size*i, 8+tile_size*j))
-                # draw score in bottom right corner of tile
-                font = pygame.font.Font(None, 12)
-                letter_score = font.render(str(letter_scores[board.board[j][i].letter]), 1, text_color)
-                background.blit(letter_score, (20+tile_size*i, 20+tile_size*j))
+        cells_played = [self.board.board[10][8], self.board.board[10][9], self.board.board[10][10], \
+        self.board.board[10][11], self.board.board[10][12]]
+        print(self.board.check_valid(cells_played))
 
-            # if cell is a letter multiplier
-            elif board.board[j][i].letter_mul != 1:
-                font = pygame.font.Font(None, 20)
-                # draw new tile color
-                pygame.draw.rect(background, (66, 99, 247), tile)
-                if board.board[j][i].letter_mul == 2:
-                    doub_letter = font.render('DL', 1, text_color)
-                    background.blit(doub_letter, (5+tile_size*i, 10+tile_size*j))
-                elif board.board[j][i].letter_mul == 3:
-                    trip_letter = font.render('TL', 1, text_color)
-                    background.blit(trip_letter, (5+tile_size*i, 10+tile_size*j))
+        while self.running:
+            self.handle_event()
+            self.update()
+            self.draw()
 
-            # if cell is a word multiplier
-            elif board.board[j][i].word_mul != 1:
-                font = pygame.font.Font(None, 20)
-                # draw new tile color
-                pygame.draw.rect(background, (255, 87, 61), tile)
-                if board.board[j][i].word_mul == 2:
-                    doub_word = font.render('DW', 1, text_color)
-                    background.blit(doub_word, (5+tile_size*i, 10+tile_size*j))
-                elif board.board[j][i].word_mul == 3:
-                    trip_word = font.render('TW', 1, text_color)
-                    background.blit(trip_word, (5+tile_size*i, 10+tile_size*j))
+    def draw_tile(self, i, j):
+        # draw letter tile
+        tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*j, self.tile_size-1, self.tile_size-1))
+        # if cell has a letter
+        if self.board.board[j][i].letter != None:
+            pygame.draw.rect(self.surface, (255, 200, 50), tile)
 
-            # draw empty cell
-            else:
-                pygame.draw.rect(background, (76, 255, 88), tile)
-
-        # draw rack
-        for i in range(4, 11):
-            # draw tile in rack
-            tile = pygame.Rect((0+tile_size*i, 0+tile_size*16, tile_size-1, tile_size-1))
-            pygame.draw.rect(background, (255, 200, 50), tile)
             # draw letter on tile
             font = pygame.font.Font(None, 24)
-            letter = font.render(rack[i-4], 1, text_color)
-            background.blit(letter, (9+tile_size*i, 8+tile_size*16))
+            letter = font.render(self.board.board[j][i].letter, 1, self.text_color)
+            self.surface.blit(letter, (9+self.tile_size*i, 8+self.tile_size*j))
             # draw score in bottom right corner of tile
             font = pygame.font.Font(None, 12)
-            letter_score = font.render(str(letter_scores[rack[i-4]]), 1, text_color)
-            background.blit(letter_score, (20+tile_size*i, 20+tile_size*16))
+            letter_score = font.render(str(letter_scores[self.board.board[j][i].letter]), 1, self.text_color)
+            self.surface.blit(letter_score, (20+self.tile_size*i, 20+self.tile_size*j))
+
+        # if cell is a letter multiplier
+        elif self.board.board[j][i].letter_mul != 1:
+            font = pygame.font.Font(None, 20)
+            # draw new tile color
+            pygame.draw.rect(self.surface, (66, 99, 247), tile)
+            if self.board.board[j][i].letter_mul == 2:
+                doub_letter = font.render('DL', 1, self.text_color)
+                self.surface.blit(doub_letter, (5+self.tile_size*i, 10+self.tile_size*j))
+            elif self.board.board[j][i].letter_mul == 3:
+                trip_letter = font.render('TL', 1, self.text_color)
+                self.surface.blit(trip_letter, (5+self.tile_size*i, 10+self.tile_size*j))
+
+        # if cell is a word multiplier
+        elif self.board.board[j][i].word_mul != 1:
+            font = pygame.font.Font(None, 20)
+            # draw new tile color
+            pygame.draw.rect(self.surface, (255, 87, 61), tile)
+            if self.board.board[j][i].word_mul == 2:
+                doub_word = font.render('DW', 1, self.text_color)
+                self.surface.blit(doub_word, (5+self.tile_size*i, 10+self.tile_size*j))
+            elif self.board.board[j][i].word_mul == 3:
+                trip_word = font.render('TW', 1, self.text_color)
+                self.surface.blit(trip_word, (5+self.tile_size*i, 10+self.tile_size*j))
+
+        # draw empty cell
+        else:
+            pygame.draw.rect(self.surface, (76, 255, 88), tile)
+
+
+    def draw_board(self):
+        for i in range(15):
+            for j in range(15):
+                self.draw_tile(i,j)
+
+
+    def draw_rack(self):
+        for i in range(4, 11):
+            # draw tile in rack
+            tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
+            pygame.draw.rect(self.surface, (255, 200, 50), tile)
+            # draw letter on tile
+            font = pygame.font.Font(None, 24)
+            letter = font.render(self.player1.rack[i-4], 1, self.text_color)
+            self.surface.blit(letter, (9+self.tile_size*i, 8+self.tile_size*16))
+            # draw score in bottom right corner of tile
+            font = pygame.font.Font(None, 12)
+            letter_score = font.render(str(letter_scores[self.player1.rack[i-4]]), 1, self.text_color)
+            self.surface.blit(letter_score, (20+self.tile_size*i, 20+self.tile_size*16))
+
+    def handle_event(self):
+        event = pygame.event.poll()
+        if event.type == QUIT:
+            self.running = False
+        elif event.type == MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            for i in range(15):
+                for j in range(15):
+                    tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*j, self.tile_size-1, self.tile_size-1))
+                    if tile.collidepoint(pos):
+                        self.board.board[j][i].letter = 'Z'
+                        self.draw_tile(i,j)
+
+    def draw(self):
+        self.screen.blit(self.surface, (0,0))
+        pygame.display.flip()
+
+    def update(self):
+        pass
+
+
+def check_valid(self, trie, cells_played):
+    """
+    Given a list of the cells played will check if the word is valid. The word
+    is only valid if each letter played is in the set cross_check for that given
+    cell and the word as a whole is in the dictionary (trie tree).
+    """
+    word = []
+    for cell in cells_played:
+        word.append(cell.letter)
+        if cell.letter not in cell.cross_check:
+            return False
+
+    if trie.valid_word(word):
+        return True
+    else:
+        return False
+
 
 def main():
     pygame.init()
@@ -363,39 +448,10 @@ def main():
     screen.blit(background, (0,0))
     pygame.display.flip()
 
-    draw_everything(background)
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                running = False
-
-        screen.blit(background, (0,0))
-        pygame.display.flip()
-
-        draw_everything(background)
-
+    game = Game(screen, background)
+    game.play_game()
     pygame.quit()
 
 
 if __name__ == '__main__':
-
-    board = Board("20k.txt")
-    board.initBoard()
-    board.board[10][8].letter = 'H'
-    board.board[10][9].letter = 'E'
-    board.board[10][10].letter = 'L'
-    board.board[10][11].letter = 'L'
-    board.board[10][12].letter = 'O'
-    board.board[9][9].letter = 'T'
-    board.board[11][9].letter = 'A'
-    board.board[12][9].letter = 'M'
-
-    cells_played = [board.board[10][8], board.board[10][9], board.board[10][10], board.board[10][11], board.board[10][12]]
-    print(board.check_valid(cells_played))
-
-    board.board[0][5].letter = 'A'
-    board.board[0][7].letter = 'Q'
-    rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
     main()
