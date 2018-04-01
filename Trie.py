@@ -83,9 +83,8 @@ class TrieTree():
     def update_down_check(self, prefix, suffix, cell):
         curr_node = self.root
         for letter in prefix:
-            if letter in curr_node.children:
-                curr_node = curr_node.children[letter]
-                break
+            curr_node = curr_node.children[letter]
+
 
         for letter in alphabet:
             if letter not in curr_node.children:
@@ -100,9 +99,8 @@ class TrieTree():
     def update_across_check(self, prefix, suffix, cell):
         curr_node = self.root
         for letter in prefix:
-            if letter in curr_node.children:
-                curr_node = curr_node.children[letter]
-                break
+            curr_node = curr_node.children[letter]
+                
 
         for letter in alphabet:
             if letter not in curr_node.children:

@@ -270,6 +270,94 @@ class Board:
             cell.down_sum = 0
             cell.anchor = False
 
+    def convert_cells_played(self, cells_played):
+        """
+        The cells played list can be in an order with just the cells that were played
+        and not the ones already on the board. This function will order them and fill
+        in any of the letters on the board to complete the word.
+        """
+        if len(cells_played) == 1:
+            return cells_played
+        elif cells_played[0].row == cells_played[1].row:
+            cells_played.sort(key=lambda cell: cell.col)
+            start_cell = cells_played[0]
+            end_cell = cells_played[-1]
+            
+            # Add all adjacent cells with letters to the left of the first placed letter
+            row = start_cell.row
+            col = start_cell.col
+            while col > 0:
+                col -= 1
+                curr_cell = self.board[row][col]
+                if curr_cell.letter != None:
+                    cells_played.append(curr_cell)
+                else:
+                    break
+            
+            # Add all adjacent cells with letters to the right of the last letter
+            row = end_cell.row
+            col = end_cell.col
+            while col < 14:
+                col += 1
+                curr_cell = self.board[row][col]
+                if curr_cell.letter != None:
+                    cells_played.append(curr_cell)
+                else:
+                    break
+                
+            # Add all cells between the first and last placed letters
+            row = start_cell.row
+            col = start_cell.col
+            curr_cell = start_cell
+            while curr_cell is not end_cell:
+                if curr_cell not in cells_played:
+                    cells_played.append(curr_cell)
+                col += 1
+                curr_cell = self.board[row][col]
+
+            cells_played.sort(key=lambda cell: cell.col)
+            return cells_played
+
+        else:
+            cells_played.sort(key=lambda cell: cell.row)
+            start_cell = cells_played[0]
+            end_cell = cells_played[-1]
+            
+            # Add all adjacent cells with letters above the first placed letter
+            row = start_cell.row
+            col = start_cell.col
+            while row > 0:
+                row -= 1
+                curr_cell = self.board[row][col]
+                if curr_cell.letter != None:
+                    cells_played.append(curr_cell)
+                else:
+                    break
+            
+            # Add all adjacent cells with letters below the last letter
+            row = end_cell.row
+            col = end_cell.col
+            while row < 14:
+                row += 1
+                curr_cell = self.board[row][col]
+                if curr_cell.letter != None:
+                    cells_played.append(curr_cell)
+                else:
+                    break
+                
+            # Add all cells between the first and last placed letters
+            row = start_cell.row
+            col = start_cell.col
+            curr_cell = start_cell
+            while curr_cell is not end_cell:
+                if curr_cell not in cells_played:
+                    cells_played.append(curr_cell)
+                row += 1
+                curr_cell = self.board[row][col]
+
+            cells_played.sort(key=lambda cell: cell.row)
+            return cells_played
+
 
 class Cell:
     def __init__(self, letter, letter_mul, word_mul, row, col):
@@ -350,12 +438,19 @@ class Game:
         self.board.board[10][11].letter = 'L'
         self.board.board[10][12].letter = 'O'
 
-        cells_played = [self.board.board[10][8], self.board.board[10][9], self.board.board[10][10], \
-        self.board.board[10][11], self.board.board[10][12]]
+        cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
+        self.board.board[10][11]]
+
+        # The cells played list can be in an order with just the cells that were played
+        # and not the ones already on the board. This function will order them and fill
+        # in any of the letters on the board to complete the word. 
+        cells_played = self.board.convert_cells_played(cells_played)
+
         # Returns a True if the cells played were true and false if they were not
         valid = self.board.check_valid(cells_played)
         print(valid)
-        # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
+        # if the word is actully valid
         self.board.cross_checks_sums(cells_played)
         # Returns the score of the tiles played
         score = self.board.compute_score(cells_played)
@@ -365,9 +460,11 @@ class Game:
 
         self.board.board[9][9].letter = 'T'
         self.board.board[11][9].letter = 'A'
-        self.board.board[12][9].letter = 'B'
+        self.board.board[12][9].letter = 'M'
 
-        cells_played = [self.board.board[9][9], self.board.board[10][9], self.board.board[11][9], self.board.board[12][9]]
+        cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
+        
+        cells_played = self.board.convert_cells_played(cells_played)
         # Returns a True if the cells played were true and false if they were not
         valid = self.board.check_valid(cells_played)
         print(valid)
