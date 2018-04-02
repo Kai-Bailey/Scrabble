@@ -423,13 +423,19 @@ class Player:
             cell = self.board.board[row][col]
             tiles_played.append(cell)
 
+        tiles_played = self.board.convert_cells_played(tiles_played)
+
         for t in tiles_played:
             print(t.letter)
 
         if self.board.check_valid(tiles_played):
             print(True)
-            # compute score
+
+            self.board.cross_checks_sums(tiles_played)
+            score = self.board.compute_score(tiles_played)
             self.score += self.board.compute_score(tiles_played)
+            self.board.placed_cell_cleanup(tiles_played)
+
             # get new tiles and put on rack
             for t in self.placed_tiles:
                 new_tiles[t] = self.board.draw_random_tile()
@@ -447,7 +453,7 @@ class Player:
             row = self.placed_tiles[t][1][0]
             col = self.placed_tiles[t][1][1]
             # remove tiles from board
-            self.board.board[col][row].letter = None
+            self.board.board[row][col].letter = None
             # put tiles back on rack
             self.rack[t] = self.placed_tiles[t][0]
 
@@ -484,52 +490,49 @@ class Game:
 
     def play_game(self):
 
-        # self.board.board[10][8].letter = 'H'
-        # self.board.board[10][9].letter = 'E'
-        # self.board.board[10][10].letter = 'L'
-        # self.board.board[10][11].letter = 'L'
-        # self.board.board[10][12].letter = 'O'
-        #
-        # cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
-        # self.board.board[10][11]]
-        #
-        # # The cells played list can be in an order with just the cells that were played
-        # # and not the ones already on the board. This function will order them and fill
-        # # in any of the letters on the board to complete the word.
-        # cells_played = self.board.convert_cells_played(cells_played)
-        #
-        # # Returns a True if the cells played were true and false if they were not
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
-        # # if the word is actully valid
-        # self.board.cross_checks_sums(cells_played)
-        # # Returns the score of the tiles played
-        # score = self.board.compute_score(cells_played)
-        # print(score)
-        # # Run after previous commands
-        # self.board.placed_cell_cleanup(cells_played)
-        #
-        # self.board.board[9][9].letter = 'T'
-        # self.board.board[11][9].letter = 'A'
-        # self.board.board[12][9].letter = 'M'
-        #
-        # cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
-        #
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # # Returns a True if the cells played were true and false if they were not
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # # Updates the acrsoss/down checks and sum. Must be called after check_valid
-        # self.board.cross_checks_sums(cells_played)
-        # # Returns the score of the tiles played
-        # score = self.board.compute_score(cells_played)
-        # print(score)
-        # # Run after previous commands
-        # self.board.placed_cell_cleanup(cells_played)
-        # for i in range(15):
-        #     for j in range(15):
-        #         print(self.board.board[j][i].centre)
+        self.board.board[10][8].letter = 'H'
+        self.board.board[10][9].letter = 'E'
+        self.board.board[10][10].letter = 'L'
+        self.board.board[10][11].letter = 'L'
+        self.board.board[10][12].letter = 'O'
+
+        cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
+        self.board.board[10][11]]
+
+        # The cells played list can be in an order with just the cells that were played
+        # and not the ones already on the board. This function will order them and fill
+        # in any of the letters on the board to complete the word.
+        cells_played = self.board.convert_cells_played(cells_played)
+
+        # Returns a True if the cells played were true and false if they were not
+        valid = self.board.check_valid(cells_played)
+        print(valid)
+        # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
+        # if the word is actully valid
+        self.board.cross_checks_sums(cells_played)
+        # Returns the score of the tiles played
+        score = self.board.compute_score(cells_played)
+        print(score)
+        # Run after previous commands
+        self.board.placed_cell_cleanup(cells_played)
+
+        self.board.board[9][9].letter = 'T'
+        self.board.board[11][9].letter = 'A'
+        self.board.board[12][9].letter = 'M'
+
+        cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
+
+        cells_played = self.board.convert_cells_played(cells_played)
+        # Returns a True if the cells played were true and false if they were not
+        valid = self.board.check_valid(cells_played)
+        print(valid)
+        # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        self.board.cross_checks_sums(cells_played)
+        # Returns the score of the tiles played
+        score = self.board.compute_score(cells_played)
+        print(score)
+        # Run after previous commands
+        self.board.placed_cell_cleanup(cells_played)
 
         self.draw_init()
         while self.running:
@@ -679,15 +682,17 @@ class Game:
 
         # remove tile from placed tiles dictionary
         self.player1.placed_tiles = {}
-        print(self.player1.rack)
         self.draw_rack()
 
     def handle_play(self):
-        if self.player1.play_word():
-            for t in self.player1.placed_tiles:
-                self.draw_rack_tile(t+4)
-        else:
-            self.handle_recall()
+        # if some tiles have been placed
+        if self.player1.placed_tiles != {}:
+            if self.player1.play_word():
+                for t in self.player1.placed_tiles:
+                    self.draw_rack_tile(t+4)
+            else:
+                self.handle_recall()
+
 
         self.player1.placed_tiles = {}
 
