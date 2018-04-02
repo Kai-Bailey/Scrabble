@@ -33,6 +33,7 @@ class Board:
         cells can be initialized as double/triple word or double/triple letter.
         """
 
+        centre = set([(7,7)])
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14)])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
@@ -48,6 +49,11 @@ class Board:
                     self.board[i].append(Cell(None, 3, 1, i, j))
                 elif (i,j) in double_letter:
                     self.board[i].append(Cell(None, 2, 1, i, j))
+                elif (i,j) in centre:
+                    centre_cell = Cell(None, 1, 1, i, j)
+                    centre_cell.centre = True
+                    print(centre_cell.centre)
+                    self.board[i].append(centre_cell)
                 else:
                     self.board[i].append(Cell(None, 1, 1, i, j))
 
@@ -364,6 +370,7 @@ class Cell:
         self.letter = letter
         self.word_mul = word_mul
         self.letter_mul = letter_mul
+        self.centre = False
         self.row = row
         self.col = col
         # True of the cell is adjacent to a cell with a letter in it
@@ -392,14 +399,57 @@ class Player:
         self.board = board
         # dictionary for placed tiles: key is rack index, value is (letter, (row, col))
         self.placed_tiles = {}
+        self.selected_tile = ''
+        self.is_tile_selected = False
 
         self.init_rack()
 
     # place a tile on the board
-    def place_tile(self, rack_tile, cell):
-        self.board.board[cell[0]][cell[1]].letter = self.rack[rack_tile]
-        self.rack[rack_tile] = 'C' # tile is null for now
+    def place_tile(self, rack_tile, row, col):
+        self.board.board[col][row].letter = self.rack[rack_tile]
+        self.placed_tiles[self.selected_tile] = (self.rack[self.selected_tile], (col, row))
+        self.rack[self.selected_tile] = ''
         pass
+
+    # looks in the placed_tiles dictionary, checks if it's a word
+    # if it is, then it plays the word and returns true
+    def play_word(self):
+        tiles_played = []
+        new_tiles = {}
+
+        for t in self.placed_tiles:
+            row = self.placed_tiles[t][1][0]
+            col = self.placed_tiles[t][1][1]
+            cell = self.board.board[row][col]
+            tiles_played.append(cell)
+
+        for t in tiles_played:
+            print(t.letter)
+
+        if self.board.check_valid(tiles_played):
+            print(True)
+            # compute score
+            self.score += self.board.compute_score(tiles_played)
+            # get new tiles and put on rack
+            for t in self.placed_tiles:
+                new_tiles[t] = self.board.draw_random_tile()
+                self.rack[t] = new_tiles[t]
+            return True
+        else:
+            print(False)
+            return False
+
+    # recalls the tiles back to the rack
+    # currently does not empty the placed tiles dictionary
+    # that is done in the game class right now
+    def recall(self):
+        for t in self.placed_tiles:
+            row = self.placed_tiles[t][1][0]
+            col = self.placed_tiles[t][1][1]
+            # remove tiles from board
+            self.board.board[col][row].letter = None
+            # put tiles back on rack
+            self.rack[t] = self.placed_tiles[t][0]
 
     # initiliazes the rack by drawing 7 tiles from the bag
     def init_rack(self):
@@ -430,8 +480,6 @@ class Game:
         self.running = True
         self.tile_size = self.surface.get_width()/15
         self.text_color = (10, 10, 10)
-        self.is_tile_selected = False
-        self.selected_tile = ''
 
 
     def play_game(self):
@@ -479,6 +527,10 @@ class Game:
         # print(score)
         # # Run after previous commands
         # self.board.placed_cell_cleanup(cells_played)
+        # for i in range(15):
+        #     for j in range(15):
+        #         print(self.board.board[j][i].centre)
+
         self.draw_init()
         while self.running:
             self.handle_event()
@@ -524,6 +576,12 @@ class Game:
                 pygame.draw.rect(self.surface, (255, 130, 35), tile)
                 trip_word = font.render('TW', 1, self.text_color)
                 self.surface.blit(trip_word, (5+self.tile_size*i, 10+self.tile_size*j))
+
+        # if cell is the centre cell
+        elif self.board.board[j][i].centre:
+            font = pygame.font.Font(None, 20)
+            pygame.draw.rect(self.surface, (241, 244, 66), tile)
+
 
         # draw empty cell
         else:
@@ -590,8 +648,8 @@ class Game:
             if tile.collidepoint(pos):
                 # check that the rack tile is not empty
                 if self.player1.rack[i-4] != '':
-                    self.selected_tile = i - 4
-                    self.is_tile_selected = True
+                    self.player1.selected_tile = i - 4
+                    self.player1.is_tile_selected = True
                     self.draw_selected_rack_tile(i)
 
     def handle_place_tile(self, pos):
@@ -601,64 +659,36 @@ class Game:
                 if tile.collidepoint(pos):
                     if self.board.board[j][i].letter == None:
                         # set letter on the board from rack
-                        self.board.board[j][i].letter = self.player1.rack[self.selected_tile]
-                        self.player1.placed_tiles[self.selected_tile] = (self.player1.rack[self.selected_tile], (j, i))
+                        self.player1.place_tile(self.player1.selected_tile, i, j)
                         print(self.player1.placed_tiles)
-                        self.is_tile_selected = False
+                        self.player1.is_tile_selected = False
                         # draw remove tile from rack and tile on board
-                        self.draw_remove_rack_tile(self.selected_tile+4)
+                        self.draw_remove_rack_tile(self.player1.selected_tile+4)
                         self.draw_tile(i,j)
                         # set rack tile to empty
-                        self.player1.rack[self.selected_tile] = ''
+                        self.player1.rack[self.player1.selected_tile] = ''
 
 
     def handle_recall(self):
+        self.player1.recall()
         for t in self.player1.placed_tiles:
             row = self.player1.placed_tiles[t][1][0]
             col = self.player1.placed_tiles[t][1][1]
-            # remove tiles from board
-            self.board.board[col][row].letter = None
-            # put tiles back on rack
-            self.player1.rack[t] = self.player1.placed_tiles[t][0]
             # draw removal of tiles from board
             self.draw_tile(col, row)
 
         # remove tile from placed tiles dictionary
         self.player1.placed_tiles = {}
-
-
         print(self.player1.rack)
         self.draw_rack()
 
     def handle_play(self):
-        tiles_played = []
-        new_tiles = {}
-
-        for t in self.player1.placed_tiles:
-            row = self.player1.placed_tiles[t][1][0]
-            col = self.player1.placed_tiles[t][1][1]
-            cell = self.board.board[row][col]
-            tiles_played.append(cell)
-
-        for t in tiles_played:
-            print(t.letter)
-
-        if self.board.check_valid(tiles_played):
-            print(True)
-            # compute score
-            self.player1.score += self.board.compute_score(tiles_played)
-
-            # get new tiles and put on rack
+        if self.player1.play_word():
             for t in self.player1.placed_tiles:
-                new_tiles[t] = self.board.draw_random_tile()
-                self.player1.rack[t] = new_tiles[t]
                 self.draw_rack_tile(t+4)
         else:
-            print(False)
             self.handle_recall()
 
-
-        # clear placed tiles
         self.player1.placed_tiles = {}
 
     def handle_event(self):
@@ -670,7 +700,7 @@ class Game:
             recall = pygame.Rect((0+self.tile_size*1, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
             play = pygame.Rect((0+self.tile_size*12, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
             rack = pygame.Rect((0+self.tile_size*4, 0+self.tile_size*16, (self.tile_size-1)*7, self.tile_size-1))
-            if not self.is_tile_selected:
+            if not self.player1.is_tile_selected:
                 if rack.collidepoint(pos):
                     self.handle_select_rack_tile(pos)
                 elif recall.collidepoint(pos):
