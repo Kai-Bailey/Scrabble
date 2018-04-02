@@ -9,7 +9,7 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                  'X': 8, 'Y': 4, 'Z': 10}
 
 class Board:
-    
+
     def __init__(self, dict_name):
         # Array of board each inner list is a row
         self.board = []
@@ -136,7 +136,7 @@ class Board:
                 score += letter_scores[cell.letter] * cell.letter_mul
                 score += cell.across_sum
                 word_multiplier *= cell.word_mul
-    
+
 
         return score * word_multiplier
 
@@ -151,7 +151,7 @@ class Board:
 
         for cell in cells_played:
             score += letter_scores[cell.letter]
-   
+
 
         return score
 
@@ -263,7 +263,7 @@ class Board:
             self.down_check(cells_played[0].col)
             for cell in cells_played:
                 self.across_check(cell.row)
-    
+
     def placed_cell_cleanup(self, cells_played):
         for cell in cells_played:
             cell.across_sum = 0
@@ -282,7 +282,7 @@ class Board:
             cells_played.sort(key=lambda cell: cell.col)
             start_cell = cells_played[0]
             end_cell = cells_played[-1]
-            
+
             # Add all adjacent cells with letters to the left of the first placed letter
             row = start_cell.row
             col = start_cell.col
@@ -293,7 +293,7 @@ class Board:
                     cells_played.append(curr_cell)
                 else:
                     break
-            
+
             # Add all adjacent cells with letters to the right of the last letter
             row = end_cell.row
             col = end_cell.col
@@ -304,7 +304,7 @@ class Board:
                     cells_played.append(curr_cell)
                 else:
                     break
-                
+
             # Add all cells between the first and last placed letters
             row = start_cell.row
             col = start_cell.col
@@ -322,7 +322,7 @@ class Board:
             cells_played.sort(key=lambda cell: cell.row)
             start_cell = cells_played[0]
             end_cell = cells_played[-1]
-            
+
             # Add all adjacent cells with letters above the first placed letter
             row = start_cell.row
             col = start_cell.col
@@ -333,7 +333,7 @@ class Board:
                     cells_played.append(curr_cell)
                 else:
                     break
-            
+
             # Add all adjacent cells with letters below the last letter
             row = end_cell.row
             col = end_cell.col
@@ -344,7 +344,7 @@ class Board:
                     cells_played.append(curr_cell)
                 else:
                     break
-                
+
             # Add all cells between the first and last placed letters
             row = start_cell.row
             col = start_cell.col
@@ -390,17 +390,21 @@ class Player:
         self.rack = []
         self.score = 0
         self.board = board
+        # dictionary for placed tiles: key is rack index, value is (letter, (row, col))
+        self.placed_tiles = {}
+
+        self.init_rack()
 
     # place a tile on the board
     def place_tile(self, rack_tile, cell):
         self.board.board[cell[0]][cell[1]].letter = self.rack[rack_tile]
-        self.rack[rack_tile] = 'Z' # tile is null for now
+        self.rack[rack_tile] = 'C' # tile is null for now
         pass
 
-
-    def play(self):
-
-        pass
+    # initiliazes the rack by drawing 7 tiles from the bag
+    def init_rack(self):
+        for i in range(7):
+            self.rack.append(self.board.draw_random_tile())
 
 class Human:
     def __init__(self):
@@ -416,9 +420,6 @@ class Computer:
     def turn(self):
         pass
 
-class Tile:
-    pass
-
 class Game:
     def __init__(self, screen, background):
         self.screen = screen
@@ -429,64 +430,60 @@ class Game:
         self.running = True
         self.tile_size = self.surface.get_width()/15
         self.text_color = (10, 10, 10)
+        self.is_tile_selected = False
+        self.selected_tile = ''
+
 
     def play_game(self):
 
-        self.board.board[10][8].letter = 'H'
-        self.board.board[10][9].letter = 'E'
-        self.board.board[10][10].letter = 'L'
-        self.board.board[10][11].letter = 'L'
-        self.board.board[10][12].letter = 'O'
-
-        cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
-        self.board.board[10][11]]
-
-        # The cells played list can be in an order with just the cells that were played
-        # and not the ones already on the board. This function will order them and fill
-        # in any of the letters on the board to complete the word. 
-        cells_played = self.board.convert_cells_played(cells_played)
-
-        # Returns a True if the cells played were true and false if they were not
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
-        # if the word is actully valid
-        self.board.cross_checks_sums(cells_played)
-        # Returns the score of the tiles played
-        score = self.board.compute_score(cells_played)
-        print(score)
-        # Run after previous commands
-        self.board.placed_cell_cleanup(cells_played)
-
-        self.board.board[9][9].letter = 'T'
-        self.board.board[11][9].letter = 'A'
-        self.board.board[12][9].letter = 'M'
-
-        cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
-        
-        cells_played = self.board.convert_cells_played(cells_played)
-        # Returns a True if the cells played were true and false if they were not
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        # Updates the acrsoss/down checks and sum. Must be called after check_valid
-        self.board.cross_checks_sums(cells_played)
-        # Returns the score of the tiles played
-        score = self.board.compute_score(cells_played)
-        print(score)
-        # Run after previous commands
-        self.board.placed_cell_cleanup(cells_played)
-
-        self.player1.rack = ['H', 'L', 'E', 'O', 'L', 'N', 'B']
-        self.player1.place_tile(1, (0, 0))
-        self.draw_board()
-        self.draw_rack()
-        self.draw()
-
-
+        # self.board.board[10][8].letter = 'H'
+        # self.board.board[10][9].letter = 'E'
+        # self.board.board[10][10].letter = 'L'
+        # self.board.board[10][11].letter = 'L'
+        # self.board.board[10][12].letter = 'O'
+        #
+        # cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
+        # self.board.board[10][11]]
+        #
+        # # The cells played list can be in an order with just the cells that were played
+        # # and not the ones already on the board. This function will order them and fill
+        # # in any of the letters on the board to complete the word.
+        # cells_played = self.board.convert_cells_played(cells_played)
+        #
+        # # Returns a True if the cells played were true and false if they were not
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
+        # # if the word is actully valid
+        # self.board.cross_checks_sums(cells_played)
+        # # Returns the score of the tiles played
+        # score = self.board.compute_score(cells_played)
+        # print(score)
+        # # Run after previous commands
+        # self.board.placed_cell_cleanup(cells_played)
+        #
+        # self.board.board[9][9].letter = 'T'
+        # self.board.board[11][9].letter = 'A'
+        # self.board.board[12][9].letter = 'M'
+        #
+        # cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
+        #
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # # Returns a True if the cells played were true and false if they were not
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        # self.board.cross_checks_sums(cells_played)
+        # # Returns the score of the tiles played
+        # score = self.board.compute_score(cells_played)
+        # print(score)
+        # # Run after previous commands
+        # self.board.placed_cell_cleanup(cells_played)
+        self.draw_init()
         while self.running:
             self.handle_event()
             self.update()
-            self.draw()
+            self.draw_update()
 
     def draw_tile(self, i, j):
         # draw letter tile
@@ -507,30 +504,44 @@ class Game:
         # if cell is a letter multiplier
         elif self.board.board[j][i].letter_mul != 1:
             font = pygame.font.Font(None, 20)
-            # draw new tile color
-            pygame.draw.rect(self.surface, (66, 99, 247), tile)
             if self.board.board[j][i].letter_mul == 2:
+                pygame.draw.rect(self.surface, (66, 99, 247), tile)
                 doub_letter = font.render('DL', 1, self.text_color)
-                self.surface.blit(doub_letter, (5+self.tile_size*i, 10+self.tile_size*j))
+                self.surface.blit(doub_letter, (7+self.tile_size*i, 10+self.tile_size*j))
             elif self.board.board[j][i].letter_mul == 3:
+                pygame.draw.rect(self.surface, (34, 255, 45), tile)
                 trip_letter = font.render('TL', 1, self.text_color)
-                self.surface.blit(trip_letter, (5+self.tile_size*i, 10+self.tile_size*j))
+                self.surface.blit(trip_letter, (7+self.tile_size*i, 10+self.tile_size*j))
 
         # if cell is a word multiplier
         elif self.board.board[j][i].word_mul != 1:
             font = pygame.font.Font(None, 20)
-            # draw new tile color
-            pygame.draw.rect(self.surface, (255, 87, 61), tile)
             if self.board.board[j][i].word_mul == 2:
+                pygame.draw.rect(self.surface, (255, 87, 61), tile)
                 doub_word = font.render('DW', 1, self.text_color)
                 self.surface.blit(doub_word, (5+self.tile_size*i, 10+self.tile_size*j))
             elif self.board.board[j][i].word_mul == 3:
+                pygame.draw.rect(self.surface, (255, 130, 35), tile)
                 trip_word = font.render('TW', 1, self.text_color)
                 self.surface.blit(trip_word, (5+self.tile_size*i, 10+self.tile_size*j))
 
         # draw empty cell
         else:
-            pygame.draw.rect(self.surface, (76, 255, 88), tile)
+            pygame.draw.rect(self.surface, (33, 255, 192), tile)
+
+    def draw_rack_tile(self, rack_tile):
+        i = rack_tile
+        # draw tile in rack
+        tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
+        pygame.draw.rect(self.surface, (255, 200, 50), tile)
+        # draw letter on tile
+        font = pygame.font.Font(None, 24)
+        letter = font.render(self.player1.rack[i-4], 1, self.text_color)
+        self.surface.blit(letter, (9+self.tile_size*i, 8+self.tile_size*16))
+        # draw score in bottom right corner of tile
+        font = pygame.font.Font(None, 12)
+        letter_score = font.render(str(letter_scores[self.player1.rack[i-4]]), 1, self.text_color)
+        self.surface.blit(letter_score, (20+self.tile_size*i, 20+self.tile_size*16))
 
 
     def draw_board(self):
@@ -541,17 +552,114 @@ class Game:
 
     def draw_rack(self):
         for i in range(4, 11):
-            # draw tile in rack
+            self.draw_rack_tile(i)
+
+    def draw_selected_rack_tile(self, rack_tile):
+        tile = pygame.Rect((0+self.tile_size*rack_tile, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
+        pygame.draw.rect(self.surface, (163, 81, 0), tile, 1)
+
+    def draw_unselected_rack_tile(self, rack_tile):
+        tile = pygame.Rect((0+self.tile_size*rack_tile, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
+        pygame.draw.rect(self.surface, (188, 255, 243), tile, 1)
+
+    def draw_remove_rack_tile(self, rack_tile):
+        tile = pygame.Rect((0+self.tile_size*rack_tile, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
+        pygame.draw.rect(self.surface, (163, 81, 0), tile)
+
+    def draw_recall(self):
+        # draw tile in rack
+        tile = pygame.Rect((0+self.tile_size*1, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
+        pygame.draw.rect(self.surface, (163, 81, 0), tile)
+        # draw letter on tile
+        font = pygame.font.Font(None, 18)
+        letter = font.render('Recall', 1, self.text_color)
+        self.surface.blit(letter, (15+self.tile_size*1, 8+self.tile_size*16))
+
+    def draw_play(self):
+        # draw tile in rack
+        tile = pygame.Rect((0+self.tile_size*12, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
+        pygame.draw.rect(self.surface, (163, 81, 0), tile)
+        # draw letter on tile
+        font = pygame.font.Font(None, 18)
+        letter = font.render('Play', 1, self.text_color)
+        self.surface.blit(letter, (20+self.tile_size*12, 8+self.tile_size*16))
+
+    def handle_select_rack_tile(self, pos):
+        for i in range(4, 11):
             tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
-            pygame.draw.rect(self.surface, (255, 200, 50), tile)
-            # draw letter on tile
-            font = pygame.font.Font(None, 24)
-            letter = font.render(self.player1.rack[i-4], 1, self.text_color)
-            self.surface.blit(letter, (9+self.tile_size*i, 8+self.tile_size*16))
-            # draw score in bottom right corner of tile
-            font = pygame.font.Font(None, 12)
-            letter_score = font.render(str(letter_scores[self.player1.rack[i-4]]), 1, self.text_color)
-            self.surface.blit(letter_score, (20+self.tile_size*i, 20+self.tile_size*16))
+            if tile.collidepoint(pos):
+                # check that the rack tile is not empty
+                if self.player1.rack[i-4] != '':
+                    self.selected_tile = i - 4
+                    self.is_tile_selected = True
+                    self.draw_selected_rack_tile(i)
+
+    def handle_place_tile(self, pos):
+        for i in range(15):
+            for j in range(15):
+                tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*j, self.tile_size-1, self.tile_size-1))
+                if tile.collidepoint(pos):
+                    if self.board.board[j][i].letter == None:
+                        # set letter on the board from rack
+                        self.board.board[j][i].letter = self.player1.rack[self.selected_tile]
+                        self.player1.placed_tiles[self.selected_tile] = (self.player1.rack[self.selected_tile], (j, i))
+                        print(self.player1.placed_tiles)
+                        self.is_tile_selected = False
+                        # draw remove tile from rack and tile on board
+                        self.draw_remove_rack_tile(self.selected_tile+4)
+                        self.draw_tile(i,j)
+                        # set rack tile to empty
+                        self.player1.rack[self.selected_tile] = ''
+
+
+    def handle_recall(self):
+        for t in self.player1.placed_tiles:
+            row = self.player1.placed_tiles[t][1][0]
+            col = self.player1.placed_tiles[t][1][1]
+            # remove tiles from board
+            self.board.board[col][row].letter = None
+            # put tiles back on rack
+            self.player1.rack[t] = self.player1.placed_tiles[t][0]
+            # draw removal of tiles from board
+            self.draw_tile(col, row)
+
+        # remove tile from placed tiles dictionary
+        self.player1.placed_tiles = {}
+
+
+        print(self.player1.rack)
+        self.draw_rack()
+
+    def handle_play(self):
+        tiles_played = []
+        new_tiles = {}
+
+        for t in self.player1.placed_tiles:
+            row = self.player1.placed_tiles[t][1][0]
+            col = self.player1.placed_tiles[t][1][1]
+            cell = self.board.board[row][col]
+            tiles_played.append(cell)
+
+        for t in tiles_played:
+            print(t.letter)
+
+        if self.board.check_valid(tiles_played):
+            print(True)
+            # compute score
+            self.player1.score += self.board.compute_score(tiles_played)
+
+            # get new tiles and put on rack
+            for t in self.player1.placed_tiles:
+                new_tiles[t] = self.board.draw_random_tile()
+                self.player1.rack[t] = new_tiles[t]
+                self.draw_rack_tile(t+4)
+        else:
+            print(False)
+            self.handle_recall()
+
+
+        # clear placed tiles
+        self.player1.placed_tiles = {}
 
     def handle_event(self):
         event = pygame.event.poll()
@@ -559,16 +667,32 @@ class Game:
             self.running = False
         elif event.type == MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            for i in range(15):
-                for j in range(15):
-                    tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*j, self.tile_size-1, self.tile_size-1))
-                    if tile.collidepoint(pos):
-                        self.board.board[j][i].letter = 'Z'
-                        self.draw_tile(i,j)
+            recall = pygame.Rect((0+self.tile_size*1, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
+            play = pygame.Rect((0+self.tile_size*12, 0+self.tile_size*16, (self.tile_size-1)*2, self.tile_size-1))
+            rack = pygame.Rect((0+self.tile_size*4, 0+self.tile_size*16, (self.tile_size-1)*7, self.tile_size-1))
+            if not self.is_tile_selected:
+                if rack.collidepoint(pos):
+                    self.handle_select_rack_tile(pos)
+                elif recall.collidepoint(pos):
+                    self.handle_recall()
+                elif play.collidepoint(pos):
+                    self.handle_play()
+            else:
+                self.handle_place_tile(pos)
 
-    def draw(self):
+    def draw_update(self):
         self.screen.blit(self.surface, (0,0))
         pygame.display.flip()
+
+
+    def draw_init(self):
+        self.draw_board()
+        self.draw_rack()
+        self.draw_recall()
+        self.draw_play()
+        self.draw_update()
+
+
 
     def update(self):
         pass
