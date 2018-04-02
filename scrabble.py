@@ -333,6 +333,8 @@ class Board:
             cell.across_sum = 0
             cell.down_sum = 0
             cell.anchor = False
+            cell.letter_mul = 1
+            cell.word_mul = 1
 
     def convert_cells_played(self, cells_played):
         """
