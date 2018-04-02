@@ -81,32 +81,44 @@ class TrieTree():
 
 
     def update_down_check(self, prefix, suffix, cell):
+        """
+        Given the prefix and suffix of a letter will update the down check of that cell.
+        """
+        # Use the prefix to iterate throught the trie
         curr_node = self.root
         for letter in prefix:
             curr_node = curr_node.children[letter]
 
-
+        # Check all possible letters to see if they can make valid down checks
         for letter in alphabet:
+            # Remove if the letter is not a child of the current node
             if letter not in curr_node.children:
                 if letter in cell.down_check:
                     cell.down_check.remove(letter)
                 continue
+            # Remove if that letter does not form a valid word
             if not self.valid_word(suffix, curr_node.children[letter]):
                 if letter in cell.down_check:
                     cell.down_check.remove(letter)
 
     
     def update_across_check(self, prefix, suffix, cell):
+        """
+        Given the prefix and suffix of a letter will update the across check of that cell.
+        """
+        # Use the prefix to iterate through the trie
         curr_node = self.root
         for letter in prefix:
             curr_node = curr_node.children[letter]
                 
-
+        # Check all possible letters to see if they can make valid across checks
         for letter in alphabet:
+            # Remove if the letter is not a child of the current node
             if letter not in curr_node.children:
                 if letter in cell.across_check:
                     cell.across_check.remove(letter)
                 continue
+            # Remove if that letter does not form a valid word
             if not self.valid_word(suffix, curr_node.children[letter]):
                 if letter in cell.across_check:
                     cell.across_check.remove(letter)

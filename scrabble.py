@@ -11,7 +11,8 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 class Board:
 
     def __init__(self, dict_name):
-        # Array of board each inner list is a row
+        # Array of board each inner list is a row and each item in the list is 
+        # an instance of class cell
         self.board = []
         # List of players playing the game
         self.players = []
@@ -21,9 +22,11 @@ class Board:
         self.tiles = {'E':12, 'A':9, 'I':9, 'O':8, 'N':6, 'R':6, 'T':6, 'L':4, 'S':4, 'U':4, 'D':4, 'G':3, 'B':2, 'C':2, 'M':2, 'P':2, 'F':2, 'H':2, 'V':2, 'W':2, 'Y':2, 'K':1, 'J':1, 'X':1, 'Q':1, 'Z':1}
         self.number_tiles = 98
 
+        # A trie tree of all the valid words to be used in the game
         self.dictionary = Trie.TrieTree()
         self.dictionary.trie_from_txt(dict_name)
 
+        # Fill and initialize cells in self.board
         self.initBoard()
 
     def initBoard(self):
@@ -32,12 +35,14 @@ class Board:
         list of lists and each element is an object of class cell. Based on their position on the board cells
         cells can be initialized as double/triple word or double/triple letter.
         """
-
+        # Encodes the information of which cells are double/triple word/letter and centre
         centre = set([(7,7)])
         triple_word = set([(0,0), (0,7), (0,14), (7,0), (7,14), (14,0), (14,7), (14,14)])
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
         double_letter = set([(0,3), (0,11), (2,6), (2,8), (3,0), (3,7), (3,14), (6,2), (6,6), (6,8), (6,12), (7,3), (7,11), (8,2), (8,6), (8,8), (8,12), (14,3), (14,11), (12,6), (12,8), (11,0), (11,7), (11,14)])
+        
+        # Iterate through all cells on the board check if the are double/triple word/letter or centre
         for i in range(15):
             self.board.append([])
             for j in range(15):
@@ -52,6 +57,7 @@ class Board:
                 elif (i,j) in centre:
                     centre_cell = Cell(None, 1, 1, i, j)
                     centre_cell.centre = True
+                    centre_cell.anchor = True
                     print(centre_cell.centre)
                     self.board[i].append(centre_cell)
                 else:
@@ -63,8 +69,11 @@ class Board:
         Draw a random tile from the "bag of tiles". Returns the leter that was drawn
         and removes it from the bag of tiles.
         """
+        # Random number between 1 and the number of tiles
         rand_ind = random.randint(1, self.number_tiles-1)
 
+        # Loop though the tiles in the bag until greater than rand int.
+        # Remove that tile and return it.
         sum_letters = 0
         for let, num_left in self.tiles.items():
             sum_letters += num_left
@@ -86,21 +95,37 @@ class Board:
         is only valid if each letter played is in the set cross_check for that given
         cell and the word as a whole is in the dictionary (trie tree).
         """
+        
+        # Convert cells will return an empty list of cells if the cells played 
+        # are not all in the same row or collumn. In this case the word is false.
+        if len(cells_played) == 0:
+            return False
 
+        # Ensure that atleast one letter is connected to the others on the board
+        connected = False
+        for cell in cells_played:
+            if cell.anchor:
+                connected = True 
+
+        if not connected:
+            return False 
+
+        # If it is single letter just have to check the down checks and across checks
         if len(cells_played) == 1:
             cell = cells_played[0]
-            if cell.letter in cell.across_check and cell.letter in cell.down_check:
+            if cell.letter in cell.down_check and cell.letter in cell.across_check:
                 return True
             else:
-                return False
+                return False              
 
+        # If it is an across move make sure all cells satisfy their down checks
         word = []
-
         if cells_played[0].row == cells_played[1].row:
             for cell in cells_played:
                 word.append(cell.letter)
                 if cell.letter not in cell.down_check:
                     return False
+        # If it is a down move ensure all cells satisy their across checks
         else:
             for cell in cells_played:
                 word.append(cell.letter)
@@ -111,6 +136,7 @@ class Board:
         word = ''.join(word)
         word = word.upper()
 
+        # Check that the overall word is a valid
         if self.dictionary.valid_word(word):
             return True
         else:
@@ -158,18 +184,24 @@ class Board:
         for cell in cells_played:
             score += letter_scores[cell.letter]
 
-
         return score
 
 
     def across_check(self, row):
+        """
+        Updates the across_check for every cell in a row on the board. The across_check
+        is all valid letters that can be played so when making a down word through this 
+        cell it also forms valid across words.
+        """
+
         for cell in self.board[row]:
+            # If the letter is already placed then skip
             if cell.letter != None:
                 continue
             row = cell.row
             col = cell.col
-            cell.anchor = True
 
+            # Build the prefix of all the words before this letter
             prefix = []
             prefix_cell = []
             while col > 0:
@@ -182,6 +214,7 @@ class Board:
                     break
             prefix.reverse()
 
+            # Build the suffix of all letters after this one
             row = cell.row
             col = cell.col
             suffix = []
@@ -200,21 +233,34 @@ class Board:
             suffix = ''.join(suffix)
             suffix = suffix.upper()
 
+            # If their are no letters to the left or right then no letters need to be removed from
+            # the across_check
             if prefix == '' and suffix == '':
                 continue
 
+            # Cell is empty but adjacent to a placed tile so it canbe the start of a new word
+            cell.anchor = True
+
+            # Update the across sum by adding the points for the suffix and prefix 
             cell.across_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            # Update the across check for the cell
             self.dictionary.update_across_check(prefix, suffix, cell)
 
     def down_check(self, col):
+        """
+        Updates the down_check for every cell in a collumn on the board. The down_check
+        is all valid letters that can be played so when making an across word through this 
+        cell it also forms valid down words.
+        """
         for row in self.board:
             cell = row[col]
+            # If the letter is already placed then skip it
             if cell.letter != None:
                 continue
             row = cell.row
             col = cell.col
-            cell.anchor = True
 
+            # Build the prefix of the letter above the current cell
             prefix = []
             prefix_cell = []
             while row > 0:
@@ -227,6 +273,7 @@ class Board:
                     break
             prefix.reverse()
 
+            # Build the suffix of the letter below the current cell
             row = cell.row
             col = cell.col
             suffix = []
@@ -245,10 +292,17 @@ class Board:
             suffix = ''.join(suffix)
             suffix = suffix.upper()
 
+            # If the cell has nothing above or below it then no need to remove letter
+            # from the down_check
             if prefix == '' and suffix == '':
                 continue
 
+            # Cell is empty but adjacent to a placed tile so it canbe the start of a new word
+            cell.anchor = True
+
+            # Update the down sum using the prefix and suffix
             cell.down_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
+            # Update the down check
             self.dictionary.update_down_check(prefix, suffix, cell)
 
 
@@ -271,6 +325,10 @@ class Board:
                 self.across_check(cell.row)
 
     def placed_cell_cleanup(self, cells_played):
+        """
+        Sets the across_sum and down_sum of the cells to 0 to ensure that they are not added to future scores.
+        Sets anchor to false these cells are placed so they cannot be the start of a new word.
+        """
         for cell in cells_played:
             cell.across_sum = 0
             cell.down_sum = 0
@@ -284,7 +342,14 @@ class Board:
         """
         if len(cells_played) == 1:
             return cells_played
+        
         elif cells_played[0].row == cells_played[1].row:
+            # If all the cells are not on the same row then send an empty list to valid_word
+            # wich will return false
+            for cell in cells_played:
+                if cells_played[0].row != cell.row:
+                    return []
+
             cells_played.sort(key=lambda cell: cell.col)
             start_cell = cells_played[0]
             end_cell = cells_played[-1]
@@ -324,7 +389,14 @@ class Board:
             cells_played.sort(key=lambda cell: cell.col)
             return cells_played
 
+        # A down word was played
         else:
+            # If all the cells are not on the same collumn then send an empty list to valid_word
+            # wich will return false
+            for cell in cells_played:
+                if cells_played[0].col != cell.col:
+                    return []
+
             cells_played.sort(key=lambda cell: cell.row)
             start_cell = cells_played[0]
             end_cell = cells_played[-1]
@@ -435,6 +507,7 @@ class Player:
             score = self.board.compute_score(tiles_played)
             self.score += self.board.compute_score(tiles_played)
             self.board.placed_cell_cleanup(tiles_played)
+            print("Score: ", score)
 
             # get new tiles and put on rack
             for t in self.placed_tiles:
@@ -490,49 +563,49 @@ class Game:
 
     def play_game(self):
 
-        self.board.board[10][8].letter = 'H'
-        self.board.board[10][9].letter = 'E'
-        self.board.board[10][10].letter = 'L'
-        self.board.board[10][11].letter = 'L'
-        self.board.board[10][12].letter = 'O'
+        # self.board.board[10][8].letter = 'H'
+        # self.board.board[10][9].letter = 'E'
+        # self.board.board[10][10].letter = 'L'
+        # self.board.board[10][11].letter = 'L'
+        # self.board.board[10][12].letter = 'O'
 
-        cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
-        self.board.board[10][11]]
+        # cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
+        # self.board.board[10][11]]
 
-        # The cells played list can be in an order with just the cells that were played
-        # and not the ones already on the board. This function will order them and fill
-        # in any of the letters on the board to complete the word.
-        cells_played = self.board.convert_cells_played(cells_played)
+        # # The cells played list can be in an order with just the cells that were played
+        # # and not the ones already on the board. This function will order them and fill
+        # # in any of the letters on the board to complete the word.
+        # cells_played = self.board.convert_cells_played(cells_played)
 
-        # Returns a True if the cells played were true and false if they were not
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
-        # if the word is actully valid
-        self.board.cross_checks_sums(cells_played)
-        # Returns the score of the tiles played
-        score = self.board.compute_score(cells_played)
-        print(score)
-        # Run after previous commands
-        self.board.placed_cell_cleanup(cells_played)
+        # # Returns a True if the cells played were true and false if they were not
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
+        # # if the word is actully valid
+        # self.board.cross_checks_sums(cells_played)
+        # # Returns the score of the tiles played
+        # score = self.board.compute_score(cells_played)
+        # print(score)
+        # # Run after previous commands
+        # self.board.placed_cell_cleanup(cells_played)
 
-        self.board.board[9][9].letter = 'T'
-        self.board.board[11][9].letter = 'A'
-        self.board.board[12][9].letter = 'M'
+        # self.board.board[9][9].letter = 'T'
+        # self.board.board[11][9].letter = 'A'
+        # self.board.board[12][9].letter = 'M'
 
-        cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
+        # cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
 
-        cells_played = self.board.convert_cells_played(cells_played)
-        # Returns a True if the cells played were true and false if they were not
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        # Updates the acrsoss/down checks and sum. Must be called after check_valid
-        self.board.cross_checks_sums(cells_played)
-        # Returns the score of the tiles played
-        score = self.board.compute_score(cells_played)
-        print(score)
-        # Run after previous commands
-        self.board.placed_cell_cleanup(cells_played)
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # # Returns a True if the cells played were true and false if they were not
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # # Updates the acrsoss/down checks and sum. Must be called after check_valid
+        # self.board.cross_checks_sums(cells_played)
+        # # Returns the score of the tiles played
+        # score = self.board.compute_score(cells_played)
+        # print(score)
+        # # Run after previous commands
+        # self.board.placed_cell_cleanup(cells_played)
 
         self.draw_init()
         while self.running:
