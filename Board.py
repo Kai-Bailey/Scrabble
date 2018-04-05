@@ -156,19 +156,23 @@ class Board:
 
         if len(cells_played) == 1:
             for cell in cells_played:
-                score += letter_scores[cell.letter] * cell.letter_mul
-                score += cell.down_sum
-                score += cell.across_sum
+                # score += letter_scores[cell.letter] * cell.letter_mul
+                if cell.down_sum > 0:
+                    score += cell.down_sum + letter_scores[cell.letter]
+                if cell.across_sum > 0:
+                    score += cell.across_sum + letter_scores[cell.letter]
                 word_multiplier *= cell.word_mul
         elif cells_played[0].row == cells_played[1].row:
                 for cell in cells_played:
                     score += letter_scores[cell.letter] * cell.letter_mul
-                    score += cell.down_sum
+                    if cell.down_sum > 0:
+                        score += cell.down_sum + letter_scores[cell.letter]
                     word_multiplier *= cell.word_mul
         else:
             for cell in cells_played:
                 score += letter_scores[cell.letter] * cell.letter_mul
-                score += cell.across_sum
+                if cell.across_sum > 0:
+                    score += cell.across_sum + letter_scores[cell.letter]
                 word_multiplier *= cell.word_mul
 
 
