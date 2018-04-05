@@ -95,7 +95,7 @@ class Game:
     def __init__(self, screen, background):
         self.screen = screen
         self.surface = background
-        self.board = Board('dictionary.txt')
+        self.board = Board('dictionary.txt', 2)
         self.players = [Player(self.board, 'Cody'), Player(self.board, 'Kai')]
         self.current_player_number = 0
         self.current_player = self.players[self.current_player_number]

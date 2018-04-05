@@ -9,12 +9,12 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Board:
 
-    def __init__(self, dict_name):
+    def __init__(self, dict_name, number_players):
         # Array of board each inner list is a row and each item in the list is 
         # an instance of class cell
         self.board = []
         # List of players playing the game
-        self.players = []
+        self.players = number_players
         # Index in list players of whos turn it is
         self.turn = 0
         # "Bag of Tiles" left for the players to randomly choose from
@@ -103,6 +103,11 @@ class Board:
         if len(cells_played) == 0:
             return False
 
+        # A cheeky way to ensure that the first cell played is greater than 1
+        if self.number_tiles == 98-7*(self.players):
+            if len(cells_played) == 1:
+                return False
+
         # Ensure that atleast one letter is connected to the others on the board
         connected = False
         for cell in cells_played:
@@ -158,21 +163,21 @@ class Board:
             for cell in cells_played:
                 # score += letter_scores[cell.letter] * cell.letter_mul
                 if cell.down_sum > 0:
-                    score += cell.down_sum + letter_scores[cell.letter]
+                    score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
                 if cell.across_sum > 0:
-                    score += cell.across_sum + letter_scores[cell.letter]
+                    score += cell.across_sum + letter_scores[cell.letter] * cell.letter_mul
                 word_multiplier *= cell.word_mul
         elif cells_played[0].row == cells_played[1].row:
                 for cell in cells_played:
                     score += letter_scores[cell.letter] * cell.letter_mul
                     if cell.down_sum > 0:
-                        score += cell.down_sum + letter_scores[cell.letter]
+                        score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
                     word_multiplier *= cell.word_mul
         else:
             for cell in cells_played:
                 score += letter_scores[cell.letter] * cell.letter_mul
                 if cell.across_sum > 0:
-                    score += cell.across_sum + letter_scores[cell.letter]
+                    score += cell.across_sum + letter_scores[cell.letter] * cell.letter_mul
                 word_multiplier *= cell.word_mul
 
 
@@ -201,6 +206,12 @@ class Board:
         """
 
         for cell in self.board[row]:
+
+            # The cells in the row have changed (thats why we are recomputting the across check) so must reset the across
+            # check before recomputing the across checks or else we would be restricing to the current state of the 
+            # row and the previous state
+            cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+
             # If the letter is already placed then skip
             if cell.letter != None:
                 continue
@@ -260,6 +271,11 @@ class Board:
         """
         for row in self.board:
             cell = row[col]
+            
+            # The cells in the collum have changed (thats why we are recomputting the down check) so must reset the down
+            # check before recomputing the down checks or else we would be restricting the the to the current state of the 
+            # row and the previous state
+            cell.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
             # If the letter is already placed then skip it
             if cell.letter != None:
                 continue
@@ -551,11 +567,11 @@ class Board:
                     row = anchor.row
                     col = anchor.col
                     if orientation == "A":
-                        curr_cell = self.board[row][col-limit]
+                        col -= limit
                     else:
-                        curr_cell = self.board[row-limit][col]
+                        row -= limit
 
-                    partial_word.append((letter, curr_cell.row, curr_cell.col)) 
+                    partial_word.append((letter, row, col)) 
                     self.generate_prefix(partial_word, limit-1, rack, anchor, child)
                     rack.append(child.letter)
 
