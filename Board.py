@@ -25,6 +25,9 @@ class Board:
         self.dictionary = Trie.TrieTree()
         self.dictionary.trie_from_txt(dict_name)
 
+        # A dictionary contain
+        self.moves = []
+
         # Fill and initialize cells in self.board
         self.initBoard()
 
@@ -334,6 +337,8 @@ class Board:
             cell.anchor = False
             cell.letter_mul = 1
             cell.word_mul = 1
+            cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+            cell.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
 
     def convert_cells_played(self, cells_played):
         """
@@ -436,3 +441,197 @@ class Board:
 
             cells_played.sort(key=lambda cell: cell.row)
             return cells_played
+
+    def generate_moves(self, rack):
+        """
+        Given a rack this function will return a list of cells representing the optimum
+        move for the current state of the board.
+        """
+        for row in self.board:
+            for cell in row:
+                
+                if not cell.anchor:
+                    continue
+                else:
+
+                    # Consider the across move                
+                    row = cell.row
+                    col = cell.col
+                    curr_cell = self.board[row][col-1]
+
+                    partial_word = []
+
+                    # Adjacent cell to the left is filled so just build the suffix
+                    if curr_cell.letter != None:
+                        while curr_cell.letter != None and col > 0:
+                            partial_word.append((curr_cell.letter, curr_cell.row, curr_cell.col))
+                            col -= 1
+                            curr_cell = self.board[row][col]
+                         
+                        partial_word.reverse()
+                        
+                        # Traverse the trie tree to get to the correct node
+                        node = self.dictionary.root
+                        for item in partial_word:
+                            node = node.children[item[0]]
+                        
+
+                        self.generate_suffix(partial_word[:], rack, cell, "A", node)
+
+                    # Find the limit to build the left part
+                    else:
+                        limit = 0
+
+                        while not curr_cell.anchor and col> 0 and limit < 7:
+                            limit += 1
+                            col -= 1
+                            curr_cell = self.board[row][col]
+    
+                        self.generate_prefix([], limit, rack, cell, "A")                  
+                    
+                    # Consider the down move                
+                    row = cell.row
+                    col = cell.col
+                    curr_cell = self.board[row-1][col]
+
+                    # Reset the partial word
+                    partial_word = []
+
+
+                    # Adjacent cell above is filled so just build the suffix
+                    if curr_cell.letter != None:
+                        while curr_cell.letter != None and row > 0:
+                            partial_word.append((curr_cell.letter, curr_cell.row, curr_cell.col))
+                            row -= 1
+                            curr_cell = self.board[row][col]
+                        
+                        partial_word.reverse()
+                        
+                        # Traverse the trie tree to get to the correct node
+                        node = self.dictionary.root
+                        for cell in partial_word:
+                            node = node.children[cell.letter]
+                        
+
+                        self.generate_suffix(partial_word[:], rack, cell, "D", node)
+
+                    # Find the limit to build the left part
+                    else:
+                        limit = 0
+
+                        while not curr_cell.anchor and row > 0 and limit < 7:
+                            limit += 1
+                            row -= 1
+                            curr_cell = self.board[row][col]
+    
+                        self.generate_prefix([], limit, rack, cell, "D")       
+
+    def generate_prefix(self, partial_word, limit, rack, anchor, orientation, node=None):
+        """
+        Generates all possible prefixes given the limit and calls generate suffix to see if
+        a valid word can be formed from them.
+        """
+        if node == None:
+            node = self.dictionary.root
+
+        self.generate_suffix(partial_word[:], rack, anchor, orientation, node)
+
+
+
+        if limit > 0:
+            for letter in node.children:
+                if letter in rack:
+                    child = node.children[letter]
+                    rack.remove(child.letter)
+
+                    row = anchor.row
+                    col = anchor.col
+                    if orientation == "A":
+                        curr_cell = self.board[row][col-limit]
+                    else:
+                        curr_cell = self.board[row-limit][col]
+
+                    partial_word.append((letter, curr_cell.row, curr_cell.col)) 
+                    self.generate_prefix(partial_word, limit-1, rack, anchor, child)
+                    rack.append(child.letter)
+
+
+    def generate_suffix(self, partial_word, rack, cell, orientation, node):
+        """
+        Will generate all valid suffixes for the partial word and pass them to evaluate move to 
+        be ranked.
+
+        cell - Current cell on the board we are filling
+        node - The node of the trie tree we are in based on the partial_word
+        partial_word - The word we have built up so far
+        rack - current letter we can build
+        orientation - "A" for across or "D" for down 
+        """
+        if cell.letter == None:
+            if node.terminate:
+                self.evaluate_move(partial_word)
+
+
+            for letter in node.children:
+                if letter in rack:
+                    if orientation == "A":
+                        if letter not in cell.down_check:
+                            continue
+                    elif letter not in cell.across_check:
+                        continue
+
+                    rack.remove(letter)
+
+                    # cell.letter = letter
+                    partial_word.append((letter, cell.row, cell.col))
+
+                    row = cell.row
+                    col = cell.col
+
+                    # Ensure that the word is not built off of the board
+                    if row > 13 or col >13:
+                        node = node.children[letter]
+                        if node.terminate:
+                            self.evaluate_move(partial_word)
+                    else:
+                        if orientation == "A":
+                            curr_cell = self.board[row][col+1]
+                        else:
+                            curr_cell = self.board[row+1][col]
+
+                        self.generate_suffix(partial_word[:], rack, curr_cell, orientation, node.children[letter])
+                        partial_word = partial_word[:-1]
+                        rack.append(letter)
+
+        else:
+            if cell.letter in node.children:
+                
+                partial_word.append((cell.letter, cell.row, cell.col))
+                row = cell.row
+                col = cell.col
+
+                # Ensure that the word is not built off of the board
+                if row > 13 or col > 13:
+                    node = node.children[cell.letter]
+                    if node.terminate:
+                        self.evaluate_move(partial_word)
+                else:
+                    if orientation == "A":
+                        curr_cell = self.board[row][col+1]
+                    else:
+                        curr_cell = self.board[row+1][col]
+                    self.generate_suffix(partial_word[:], rack, curr_cell, orientation, node.children[cell.letter])
+                    
+    def evaluate_move(self, move):
+        """
+        When give a list of cells which represents a valid move this fucnction
+        will calculate the score of the move and stores it in the board attribute
+        """
+
+        #score  = self.compute_score(move)
+        move = move[:]
+        print()
+        print("Move Found!", move)
+        print()
+        self.moves.append(move)
+

@@ -16,12 +16,3 @@ class Cell:
         # it will get from connecting to additional words
         self.across_sum = 0
         self.down_sum = 0
-
-    def score(self):
-        return letter_scores[self.letter]*self.letter_mul
-
-    def setLetter(self, letter):
-        self.letter = letter
-
-    def getLetter(self):
-        return self.letter

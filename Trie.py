@@ -12,7 +12,7 @@ class Node():
         self.letter = letter
         # True if this is the ast letter in a valid word
         self.terminate = terminate
-        # Children nodes
+        # Dictionary where the key is the letter and the node holding that letter is the value
         self.children = {}
         
 
@@ -123,9 +123,6 @@ class TrieTree():
                 if letter in cell.across_check:
                     cell.across_check.remove(letter)
 
-
-    def left_part(self, partial_word, node, limit):
-        pass
 
     def valid_word(self, word, root=None):
         """

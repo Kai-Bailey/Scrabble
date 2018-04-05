@@ -102,14 +102,61 @@ class Game:
 
     def play_game(self):
 
-        # self.board.board[10][8].letter = 'H'
-        # self.board.board[10][9].letter = 'E'
-        # self.board.board[10][10].letter = 'L'
-        # self.board.board[10][11].letter = 'L'
-        # self.board.board[10][12].letter = 'O'
+        # self.board.board[7][7].letter = 'F'
+        # self.board.board[7][8].letter = 'E'
+        # self.board.board[7][9].letter = 'A'
+        # self.board.board[7][10].letter = 'R'
+        # cells_played = [self.board.board[7][7], self.board.board[7][8], self.board.board[7][9], self.board.board[7][10]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
 
-        # cells_played = [self.board.board[10][10], self.board.board[10][8], self.board.board[10][9], \
-        # self.board.board[10][11]]
+        # self.board.board[6][9].letter = 'T'
+        # self.board.board[8][9].letter = 'R'
+        # self.board.board[9][9].letter = 'N'
+        # cells_played = [self.board.board[6][9], self.board.board[8][9], self.board.board[9][9]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+
+        # self.board.board[7][11].letter = 'E'
+        # self.board.board[7][12].letter = 'D'
+        # cells_played = [self.board.board[7][11], self.board.board[7][12]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+
+        # self.board.board[6][11].letter = 'T'
+        # self.board.board[8][11].letter = 'A'
+        # cells_played = [self.board.board[6][11], self.board.board[8][11]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+
+        # self.board.board[7][6].letter = 'H'
+        # self.board.board[7][7].letter = 'E'
+        # self.board.board[7][8].letter = 'L'
+        # self.board.board[7][9].letter = 'L'
+        # self.board.board[7][10].letter = 'O'
+
+        # cells_played = [self.board.board[7][6], self.board.board[7][7], self.board.board[7][8], \
+        # self.board.board[7][9], self.board.board[7][10]]
 
         # # The cells played list can be in an order with just the cells that were played
         # # and not the ones already on the board. This function will order them and fill
@@ -127,6 +174,10 @@ class Game:
         # print(score)
         # # Run after previous commands
         # self.board.placed_cell_cleanup(cells_played)
+
+        # test_rack = ['B', 'H', 'A', 'Z', 'E', 'O', 'L']
+
+        # self.board.generate_moves(test_rack)
 
         # self.board.board[9][9].letter = 'T'
         # self.board.board[11][9].letter = 'A'
