@@ -1,4 +1,5 @@
 import Trie
+from copy import deepcopy
 from Cell import *
 import random
 
@@ -25,8 +26,9 @@ class Board:
         self.dictionary = Trie.TrieTree()
         self.dictionary.trie_from_txt(dict_name)
 
-        # A dictionary contain
-        self.moves = []
+        # moves contains a list of cells representing th best move that can be played
+        self.best_move = []
+        self.best_score = 1
 
         # Fill and initialize cells in self.board
         self.initBoard()
@@ -351,6 +353,10 @@ class Board:
         Sets the across_sum and down_sum of the cells to 0 to ensure that they are not added to future scores.
         Sets anchor to false these cells are placed so they cannot be the start of a new word.
         """
+
+        self.best_score = 0
+        self.best_move = []
+
         for cell in cells_played:
             cell.across_sum = 0
             cell.down_sum = 0
@@ -474,6 +480,10 @@ class Board:
                     continue
                 else:
 
+                    print()
+                    print("####################   Row: ", cell.row, "  Col:  ", cell.col, "   #####################")
+                    print()
+
                     # Consider the across move                
                     row = cell.row
                     col = cell.col
@@ -483,8 +493,9 @@ class Board:
 
                     # Adjacent cell to the left is filled so just build the suffix
                     if curr_cell.letter != None:
+                        col -= 1
                         while curr_cell.letter != None and col > 0:
-                            partial_word.append((curr_cell.letter, curr_cell.row, curr_cell.col))
+                            partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
                             col -= 1
                             curr_cell = self.board[row][col]
                          
@@ -496,18 +507,18 @@ class Board:
                             node = node.children[item[0]]
                         
 
-                        self.generate_suffix(partial_word[:], rack, cell, "A", node)
+                        self.generate_suffix(partial_word, rack, cell, "A", node)
 
                     # Find the limit to build the left part
                     else:
                         limit = 0
 
-                        while not curr_cell.anchor and col> 0 and limit < 7:
+                        while not curr_cell.anchor and col> 0 and limit < 8:
                             limit += 1
                             col -= 1
                             curr_cell = self.board[row][col]
     
-                        self.generate_prefix([], limit, rack, cell, "A")                  
+                        self.generate_prefix([], limit-1, rack, cell, "A")                  
                     
                     # Consider the down move                
                     row = cell.row
@@ -520,8 +531,9 @@ class Board:
 
                     # Adjacent cell above is filled so just build the suffix
                     if curr_cell.letter != None:
+                        row -= 1
                         while curr_cell.letter != None and row > 0:
-                            partial_word.append((curr_cell.letter, curr_cell.row, curr_cell.col))
+                            partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
                             row -= 1
                             curr_cell = self.board[row][col]
                         
@@ -529,22 +541,22 @@ class Board:
                         
                         # Traverse the trie tree to get to the correct node
                         node = self.dictionary.root
-                        for cell in partial_word:
-                            node = node.children[cell.letter]
+                        for item in partial_word:
+                            node = node.children[item[0]]
                         
 
-                        self.generate_suffix(partial_word[:], rack, cell, "D", node)
+                        self.generate_suffix(partial_word, rack, cell, "D", node)
 
                     # Find the limit to build the left part
                     else:
                         limit = 0
 
-                        while not curr_cell.anchor and row > 0 and limit < 7:
+                        while not curr_cell.anchor and row > 0 and limit < 8:
                             limit += 1
                             row -= 1
                             curr_cell = self.board[row][col]
     
-                        self.generate_prefix([], limit, rack, cell, "D")       
+                        self.generate_prefix([], limit-1, rack, cell, "D")       
 
     def generate_prefix(self, partial_word, limit, rack, anchor, orientation, node=None):
         """
@@ -554,9 +566,7 @@ class Board:
         if node == None:
             node = self.dictionary.root
 
-        self.generate_suffix(partial_word[:], rack, anchor, orientation, node)
-
-
+        self.generate_suffix(partial_word, rack, anchor, orientation, node)
 
         if limit > 0:
             for letter in node.children:
@@ -567,12 +577,20 @@ class Board:
                     row = anchor.row
                     col = anchor.col
                     if orientation == "A":
-                        col -= limit
-                    else:
-                        row -= limit
+                        # Shift each letter in the partial word up 1
+                        partial_word.append([letter, row, col-1])
+                        for offset in range(len(partial_word)):
+                            partial_word[offset][2] = col - (len(partial_word) - offset)
 
-                    partial_word.append((letter, row, col)) 
-                    self.generate_prefix(partial_word, limit-1, rack, anchor, child)
+                    else:
+                        partial_word.append([letter, row-1, col])
+                        # Shift each letter in the partial word to the left 1
+                        for offset in range(len(partial_word)):
+                            partial_word[offset][1] = row - (len(partial_word) - offset)
+
+
+                    self.generate_prefix(partial_word, limit-1, rack, anchor, orientation, child)
+                    partial_word.pop()
                     rack.append(child.letter)
 
 
@@ -587,9 +605,19 @@ class Board:
         rack - current letter we can build
         orientation - "A" for across or "D" for down 
         """
-        if cell.letter == None:
+        if cell.row == 14 or cell.col == 14:
             if node.terminate:
-                self.evaluate_move(partial_word)
+                for letter in partial_word:
+                    if self.board[letter[1]][letter[2]].anchor:
+                        self.evaluate_move(partial_word)
+                        break 
+
+        elif cell.letter == None:
+            if node.terminate:
+                for letter in partial_word:
+                    if self.board[letter[1]][letter[2]].anchor:
+                        self.evaluate_move(partial_word)
+                        break
 
 
             for letter in node.children:
@@ -603,44 +631,45 @@ class Board:
                     rack.remove(letter)
 
                     # cell.letter = letter
-                    partial_word.append((letter, cell.row, cell.col))
+                    partial_word.append([letter, cell.row, cell.col])
 
                     row = cell.row
                     col = cell.col
 
                     # Ensure that the word is not built off of the board
-                    if row > 13 or col >13:
-                        node = node.children[letter]
-                        if node.terminate:
-                            self.evaluate_move(partial_word)
-                    else:
-                        if orientation == "A":
-                            curr_cell = self.board[row][col+1]
-                        else:
-                            curr_cell = self.board[row+1][col]
-
-                        self.generate_suffix(partial_word[:], rack, curr_cell, orientation, node.children[letter])
-                        partial_word = partial_word[:-1]
-                        rack.append(letter)
-
-        else:
-            if cell.letter in node.children:
-                
-                partial_word.append((cell.letter, cell.row, cell.col))
-                row = cell.row
-                col = cell.col
-
-                # Ensure that the word is not built off of the board
-                if row > 13 or col > 13:
-                    node = node.children[cell.letter]
-                    if node.terminate:
-                        self.evaluate_move(partial_word)
-                else:
+                    # if row > 13 or col >13:
+                    #     node = node.children[letter]
+                    #     if node.terminate:
+                    #         self.evaluate_move(partial_word)
+                    # else:
                     if orientation == "A":
                         curr_cell = self.board[row][col+1]
                     else:
                         curr_cell = self.board[row+1][col]
-                    self.generate_suffix(partial_word[:], rack, curr_cell, orientation, node.children[cell.letter])
+
+                    self.generate_suffix(partial_word, rack, curr_cell, orientation, node.children[letter])
+                    partial_word.pop()
+                    rack.append(letter)
+
+        else:
+            if cell.letter in node.children:
+                
+                partial_word.append([cell.letter, cell.row, cell.col])
+                row = cell.row
+                col = cell.col
+
+                # # Ensure that the word is not built off of the board
+                # if row > 13 or col > 13:
+                #     node = node.children[cell.letter]
+                #     if node.terminate:
+                #         self.evaluate_move(partial_word)
+                # else:
+                if orientation == "A":
+                    curr_cell = self.board[row][col+1]
+                else:
+                    curr_cell = self.board[row+1][col]
+                self.generate_suffix(partial_word, rack, curr_cell, orientation, node.children[cell.letter])
+                partial_word.pop()
                     
     def evaluate_move(self, move):
         """
@@ -648,10 +677,51 @@ class Board:
         will calculate the score of the move and stores it in the board attribute
         """
 
-        #score  = self.compute_score(move)
-        move = move[:]
-        print()
         print("Move Found!", move)
-        print()
-        self.moves.append(move)
+
+
+
+        # Convert to list of cell objects
+        move_cell = []
+        for letter in move:
+            board_cell = self.board[letter[1]][letter[2]]
+            copy_cell = deepcopy(board_cell)
+            copy_cell.letter = letter[0]
+            move_cell.append(copy_cell)
+
+
+        if not self.check_valid(move_cell):
+            print("Generated Invalid!!!!!!")
+            import time
+            time.sleep(1)
+            return
+
+        score = self.compute_score(move_cell)
+
+
+        if score > self.best_score:
+            self.best_score = score
+            copy_move = tuple(deepcopy(move))
+            self.best_move = copy_move
+
+    def best_move_cell(self):
+        """
+        Method to retrieve the best move in the form of list of cells after they have been calculate 
+        for a particular rack and board state. 
+        """
+
+        move_cell = []
+        for letter in self.best_move:
+            self.board[letter[1]][letter[2]].letter = letter[0]
+            move_cell.append(self.board[letter[1]][letter[2]])
+
+        return move_cell            
+
+
+
+
+
+
+
+
 
