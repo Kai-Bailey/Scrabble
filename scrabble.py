@@ -163,7 +163,7 @@ class Game:
         # score = self.board.compute_score(cells_played)
         # print("score: ", score)
         # self.board.placed_cell_cleanup(cells_played)
-        #
+
         # self.board.board[6][9].letter = 'T'
         # self.board.board[8][9].letter = 'R'
         # self.board.board[9][9].letter = 'N'
@@ -175,7 +175,7 @@ class Game:
         # score = self.board.compute_score(cells_played)
         # print("score: ", score)
         # self.board.placed_cell_cleanup(cells_played)
-        #
+
         # self.board.board[7][11].letter = 'E'
         # self.board.board[7][12].letter = 'D'
         # cells_played = [self.board.board[7][11], self.board.board[7][12]]
@@ -186,7 +186,7 @@ class Game:
         # score = self.board.compute_score(cells_played)
         # print("score: ", score)
         # self.board.placed_cell_cleanup(cells_played)
-        #
+
         # self.board.board[6][11].letter = 'T'
         # self.board.board[8][11].letter = 'A'
         # cells_played = [self.board.board[6][11], self.board.board[8][11]]
@@ -224,24 +224,21 @@ class Game:
         # # Run after previous commands
         # self.board.placed_cell_cleanup(cells_played)
 
-        # test_rack = ['B', 'H', 'A', 'Z', 'E', 'O', 'L']
+        # test_rack = ['S', 'E', 'T', 'Z', 'A', 'U', 'D']
 
-        # test_rack = self.current_player.rack
-        #
         # # Fist call generate moves wich will find the best move given the current state of the
         # # board and the rack that is passed to it. Note this function will not return anything
         # # to access the best move use self.board.best_move_cell()
         # self.board.generate_moves(test_rack)
-        #
+
         # # You probably won't need these they are more my functions
         # print("Best Move: ", self.board.best_move)
         # print("Best Score: ", self.board.best_score)
-        #
+
         # # Use this function after generate_moves to get a list of cells which represents the
         # # best move that can be played
         # cells = self.board.best_move_cell()
-        # print(cells)
-        #
+
         # # You can then play the list of cells as normal. You do not need to to call check_valid or convert_cell
         # # as ever move the computer makes should be valid. However it is ok if you do. Make sure to still
         # # update cross_checks_sums and call the placed_clean_up
