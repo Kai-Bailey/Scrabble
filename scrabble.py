@@ -13,7 +13,6 @@ class Player:
         self.placed_tiles = {}
         self.selected_tile = ''
         self.tile_selected = False
-
         # dictionary for tiles to exchange: key is rack index, value is letter
         self.tiles_to_exchange = {}
 
@@ -96,7 +95,7 @@ class Game:
         self.screen = screen
         self.surface = background
         self.board = Board('dictionary.txt')
-        self.players = [Player(self.board, 'Cody'), Player(self.board, 'Kai')]
+        self.players = [Player(self.board, 'Cody'), Player(self.board, 'Kai'), Player(self.board, 'Computer1'), Player(self.board, 'Computer2')]
         self.current_player_number = 0
         self.current_player = self.players[self.current_player_number]
         self.running = True
@@ -289,6 +288,14 @@ class Game:
         letter = font.render('>', 1, self.text_color)
         self.surface.blit(letter, (10+self.tile_size*15, 40+self.tile_size*(self.current_player_number)))
 
+    def draw_tiles_left(self):
+        font = pygame.font.Font(None, 22)
+        letter = font.render('Tiles Left: ', 1, self.text_color)
+        self.surface.blit(letter, (10+self.tile_size*16, 40+self.tile_size*5))
+
+        letter = font.render(str(self.board.number_tiles), 1, self.text_color)
+        self.surface.blit(letter, (10+self.tile_size*19, 40+self.tile_size*5))
+
     def draw_scoreboard(self):
         # clear all for redrawing
         tile = pygame.Rect((self.tile_size*15, 0, (self.tile_size-1)*6, (self.tile_size-1)*10))
@@ -299,12 +306,12 @@ class Game:
         self.draw_player_names()
         self.draw_player_scores()
         self.draw_current_player()
+        self.draw_tiles_left()
 
     def handle_select_rack_tile(self, pos):
         for i in range(4, 11):
             tile = pygame.Rect((0+self.tile_size*i, 0+self.tile_size*16, self.tile_size-1, self.tile_size-1))
             if tile.collidepoint(pos):
-
                 # draw deselect of previous selected
                 if self.current_player.tile_selected:
                     self.draw_rack_tile(self.current_player.selected_tile+4)
@@ -349,7 +356,6 @@ class Game:
             if self.current_player.play_word():
                 for t in self.current_player.placed_tiles:
                     self.draw_rack_tile(t+4)
-
                 # change to next player
                 self.current_player.placed_tiles = {}
                 self.handle_endturn()
@@ -362,6 +368,9 @@ class Game:
         self.current_player_number += 1
         self.current_player_number = self.current_player_number % len(self.players)
         self.current_player = self.players[self.current_player_number]
+        # turn exchanging off if the turn is ended
+        self.exchanging = False
+        self.draw_exchange(False)
         self.draw_rack()
         self.draw_scoreboard()
 
@@ -375,7 +384,6 @@ class Game:
                 if (i-4) in self.current_player.tiles_to_exchange:
                     self.current_player.tiles_to_exchange.pop(i-4)
                     self.draw_rack_tile(i)
-
                 # check that the rack tile is not empty, then select it
                 elif self.current_player.rack[i-4] != '':
                     self.current_player.tiles_to_exchange[i-4] = self.current_player.rack[i-4]
@@ -387,6 +395,8 @@ class Game:
                 print(self.current_player.rack)
                 self.current_player.rack.remove(self.current_player.tiles_to_exchange[tile])
                 self.current_player.rack.insert(tile, self.board.draw_random_tile())
+
+            self.current_player.tiles_to_exchange = {}
             self.handle_endturn()
         self.draw_rack()
 
