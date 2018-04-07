@@ -1,4 +1,5 @@
 import Trie
+from copy import deepcopy
 from Cell import *
 import random
 
@@ -9,12 +10,12 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Board:
 
-    def __init__(self, dict_name):
+    def __init__(self, dict_name, number_players):
         # Array of board each inner list is a row and each item in the list is 
         # an instance of class cell
         self.board = []
         # List of players playing the game
-        self.players = []
+        self.players = number_players
         # Index in list players of whos turn it is
         self.turn = 0
         # "Bag of Tiles" left for the players to randomly choose from
@@ -24,6 +25,10 @@ class Board:
         # A trie tree of all the valid words to be used in the game
         self.dictionary = Trie.TrieTree()
         self.dictionary.trie_from_txt(dict_name)
+
+        # moves contains a list of cells representing th best move that can be played
+        self.best_move = []
+        self.best_score = 1
 
         # Fill and initialize cells in self.board
         self.initBoard()
@@ -100,6 +105,11 @@ class Board:
         if len(cells_played) == 0:
             return False
 
+        # A cheeky way to ensure that the first cell played is greater than 1
+        if self.number_tiles == 98-7*(self.players):
+            if len(cells_played) == 1:
+                return False
+
         # Ensure that atleast one letter is connected to the others on the board
         connected = False
         for cell in cells_played:
@@ -153,19 +163,23 @@ class Board:
 
         if len(cells_played) == 1:
             for cell in cells_played:
-                score += letter_scores[cell.letter] * cell.letter_mul
-                score += cell.down_sum
-                score += cell.across_sum
+                # score += letter_scores[cell.letter] * cell.letter_mul
+                if cell.down_sum > 0:
+                    score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
+                if cell.across_sum > 0:
+                    score += cell.across_sum + letter_scores[cell.letter] * cell.letter_mul
                 word_multiplier *= cell.word_mul
         elif cells_played[0].row == cells_played[1].row:
                 for cell in cells_played:
                     score += letter_scores[cell.letter] * cell.letter_mul
-                    score += cell.down_sum
+                    if cell.down_sum > 0:
+                        score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
                     word_multiplier *= cell.word_mul
         else:
             for cell in cells_played:
                 score += letter_scores[cell.letter] * cell.letter_mul
-                score += cell.across_sum
+                if cell.across_sum > 0:
+                    score += cell.across_sum + letter_scores[cell.letter] * cell.letter_mul
                 word_multiplier *= cell.word_mul
 
 
@@ -194,6 +208,12 @@ class Board:
         """
 
         for cell in self.board[row]:
+
+            # The cells in the row have changed (thats why we are recomputting the across check) so must reset the across
+            # check before recomputing the across checks or else we would be restricing to the current state of the 
+            # row and the previous state
+            cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+
             # If the letter is already placed then skip
             if cell.letter != None:
                 continue
@@ -253,6 +273,11 @@ class Board:
         """
         for row in self.board:
             cell = row[col]
+            
+            # The cells in the collum have changed (thats why we are recomputting the down check) so must reset the down
+            # check before recomputing the down checks or else we would be restricting the the to the current state of the 
+            # row and the previous state
+            cell.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
             # If the letter is already placed then skip it
             if cell.letter != None:
                 continue
@@ -328,12 +353,18 @@ class Board:
         Sets the across_sum and down_sum of the cells to 0 to ensure that they are not added to future scores.
         Sets anchor to false these cells are placed so they cannot be the start of a new word.
         """
+
+        self.best_score = 0
+        self.best_move = []
+
         for cell in cells_played:
             cell.across_sum = 0
             cell.down_sum = 0
             cell.anchor = False
             cell.letter_mul = 1
             cell.word_mul = 1
+            cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+            cell.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
 
     def convert_cells_played(self, cells_played):
         """
@@ -436,3 +467,261 @@ class Board:
 
             cells_played.sort(key=lambda cell: cell.row)
             return cells_played
+
+    def generate_moves(self, rack):
+        """
+        Given a rack this function will return a list of cells representing the optimum
+        move for the current state of the board.
+        """
+        for row in self.board:
+            for cell in row:
+                
+                if not cell.anchor:
+                    continue
+                else:
+
+                    print()
+                    print("####################   Row: ", cell.row, "  Col:  ", cell.col, "   #####################")
+                    print()
+
+                    # Consider the across move                
+                    row = cell.row
+                    col = cell.col
+                    curr_cell = self.board[row][col-1]
+
+                    partial_word = []
+
+                    # Adjacent cell to the left is filled so just build the suffix
+                    if curr_cell.letter != None:
+                        col -= 1
+                        while curr_cell.letter != None and col > 0:
+                            partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
+                            col -= 1
+                            curr_cell = self.board[row][col]
+                         
+                        partial_word.reverse()
+                        
+                        # Traverse the trie tree to get to the correct node
+                        node = self.dictionary.root
+                        for item in partial_word:
+                            node = node.children[item[0]]
+                        
+
+                        self.generate_suffix(partial_word, rack, cell, "A", node)
+
+                    # Find the limit to build the left part
+                    else:
+                        limit = 0
+
+                        while not curr_cell.anchor and col> 0 and limit < 8:
+                            limit += 1
+                            col -= 1
+                            curr_cell = self.board[row][col]
+    
+                        self.generate_prefix([], limit-1, rack, cell, "A")                  
+                    
+                    # Consider the down move                
+                    row = cell.row
+                    col = cell.col
+                    curr_cell = self.board[row-1][col]
+
+                    # Reset the partial word
+                    partial_word = []
+
+
+                    # Adjacent cell above is filled so just build the suffix
+                    if curr_cell.letter != None:
+                        row -= 1
+                        while curr_cell.letter != None and row > 0:
+                            partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
+                            row -= 1
+                            curr_cell = self.board[row][col]
+                        
+                        partial_word.reverse()
+                        
+                        # Traverse the trie tree to get to the correct node
+                        node = self.dictionary.root
+                        for item in partial_word:
+                            node = node.children[item[0]]
+                        
+
+                        self.generate_suffix(partial_word, rack, cell, "D", node)
+
+                    # Find the limit to build the left part
+                    else:
+                        limit = 0
+
+                        while not curr_cell.anchor and row > 0 and limit < 8:
+                            limit += 1
+                            row -= 1
+                            curr_cell = self.board[row][col]
+    
+                        self.generate_prefix([], limit-1, rack, cell, "D")       
+
+    def generate_prefix(self, partial_word, limit, rack, anchor, orientation, node=None):
+        """
+        Generates all possible prefixes given the limit and calls generate suffix to see if
+        a valid word can be formed from them.
+        """
+        if node == None:
+            node = self.dictionary.root
+
+        self.generate_suffix(partial_word, rack, anchor, orientation, node)
+
+        if limit > 0:
+            for letter in node.children:
+                if letter in rack:
+                    child = node.children[letter]
+                    rack.remove(child.letter)
+
+                    row = anchor.row
+                    col = anchor.col
+                    if orientation == "A":
+                        # Shift each letter in the partial word up 1
+                        partial_word.append([letter, row, col-1])
+                        for offset in range(len(partial_word)):
+                            partial_word[offset][2] = col - (len(partial_word) - offset)
+
+                    else:
+                        partial_word.append([letter, row-1, col])
+                        # Shift each letter in the partial word to the left 1
+                        for offset in range(len(partial_word)):
+                            partial_word[offset][1] = row - (len(partial_word) - offset)
+
+
+                    self.generate_prefix(partial_word, limit-1, rack, anchor, orientation, child)
+                    partial_word.pop()
+                    rack.append(child.letter)
+
+
+    def generate_suffix(self, partial_word, rack, cell, orientation, node):
+        """
+        Will generate all valid suffixes for the partial word and pass them to evaluate move to 
+        be ranked.
+
+        cell - Current cell on the board we are filling
+        node - The node of the trie tree we are in based on the partial_word
+        partial_word - The word we have built up so far
+        rack - current letter we can build
+        orientation - "A" for across or "D" for down 
+        """
+        if cell.row == 14 or cell.col == 14:
+            if node.terminate:
+                for letter in partial_word:
+                    if self.board[letter[1]][letter[2]].anchor:
+                        self.evaluate_move(partial_word)
+                        break 
+
+        elif cell.letter == None:
+            if node.terminate:
+                for letter in partial_word:
+                    if self.board[letter[1]][letter[2]].anchor:
+                        self.evaluate_move(partial_word)
+                        break
+
+
+            for letter in node.children:
+                if letter in rack:
+                    if orientation == "A":
+                        if letter not in cell.down_check:
+                            continue
+                    elif letter not in cell.across_check:
+                        continue
+
+                    rack.remove(letter)
+
+                    # cell.letter = letter
+                    partial_word.append([letter, cell.row, cell.col])
+
+                    row = cell.row
+                    col = cell.col
+
+                    # Ensure that the word is not built off of the board
+                    # if row > 13 or col >13:
+                    #     node = node.children[letter]
+                    #     if node.terminate:
+                    #         self.evaluate_move(partial_word)
+                    # else:
+                    if orientation == "A":
+                        curr_cell = self.board[row][col+1]
+                    else:
+                        curr_cell = self.board[row+1][col]
+
+                    self.generate_suffix(partial_word, rack, curr_cell, orientation, node.children[letter])
+                    partial_word.pop()
+                    rack.append(letter)
+
+        else:
+            if cell.letter in node.children:
+                
+                partial_word.append([cell.letter, cell.row, cell.col])
+                row = cell.row
+                col = cell.col
+
+                # # Ensure that the word is not built off of the board
+                # if row > 13 or col > 13:
+                #     node = node.children[cell.letter]
+                #     if node.terminate:
+                #         self.evaluate_move(partial_word)
+                # else:
+                if orientation == "A":
+                    curr_cell = self.board[row][col+1]
+                else:
+                    curr_cell = self.board[row+1][col]
+                self.generate_suffix(partial_word, rack, curr_cell, orientation, node.children[cell.letter])
+                partial_word.pop()
+                    
+    def evaluate_move(self, move):
+        """
+        When give a list of cells which represents a valid move this fucnction
+        will calculate the score of the move and stores it in the board attribute
+        """
+
+        print("Move Found!", move)
+
+
+
+        # Convert to list of cell objects
+        move_cell = []
+        for letter in move:
+            board_cell = self.board[letter[1]][letter[2]]
+            copy_cell = deepcopy(board_cell)
+            copy_cell.letter = letter[0]
+            move_cell.append(copy_cell)
+
+
+        if not self.check_valid(move_cell):
+            print("Generated Invalid!!!!!!")
+            import time
+            time.sleep(1)
+            return
+
+        score = self.compute_score(move_cell)
+
+
+        if score > self.best_score:
+            self.best_score = score
+            copy_move = tuple(deepcopy(move))
+            self.best_move = copy_move
+
+    def best_move_cell(self):
+        """
+        Method to retrieve the best move in the form of list of cells after they have been calculate 
+        for a particular rack and board state. 
+        """
+
+        move_cell = []
+        for letter in self.best_move:
+            self.board[letter[1]][letter[2]].letter = letter[0]
+            move_cell.append(self.board[letter[1]][letter[2]])
+
+        return move_cell            
+
+
+
+
+
+
+
+
+
