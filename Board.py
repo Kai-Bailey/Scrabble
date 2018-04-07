@@ -11,7 +11,7 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 class Board:
 
     def __init__(self, dict_name, number_players):
-        # Array of board each inner list is a row and each item in the list is 
+        # Array of board each inner list is a row and each item in the list is
         # an instance of class cell
         self.board = []
         # List of players playing the game
@@ -45,7 +45,7 @@ class Board:
         double_word = set([(1,1), (2,2), (3,3), (4,4), (1,13), (2,12), (3,11), (4,10), (10,4), (11,3), (12,2), (13,1), (10,10), (11,11), (12,12), (13,13)])
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
         double_letter = set([(0,3), (0,11), (2,6), (2,8), (3,0), (3,7), (3,14), (6,2), (6,6), (6,8), (6,12), (7,3), (7,11), (8,2), (8,6), (8,8), (8,12), (14,3), (14,11), (12,6), (12,8), (11,0), (11,7), (11,14)])
-        
+
         # Iterate through all cells on the board check if the are double/triple word/letter or centre
         for i in range(15):
             self.board.append([])
@@ -73,6 +73,7 @@ class Board:
         Draw a random tile from the "bag of tiles". Returns the leter that was drawn
         and removes it from the bag of tiles.
         """
+
         # Random number between 1 and the number of tiles
         rand_ind = random.randint(1, self.number_tiles-1)
 
@@ -83,14 +84,29 @@ class Board:
             sum_letters += num_left
             if sum_letters > rand_ind:
                 letter = let
-                if self.tiles[let] == 1:
-                    self.tiles.pop(let)
-                else:
-                    self.tiles[let] -= 1
+                # if self.tiles[let] == 1:
+                #     self.tiles.pop(let)
+                # else:
+                self.tiles[let] -= 1
                 break
 
         self.number_tiles -= 1
-        return letter
+        # If there are no more tiles in the bag, return None
+        if self.number_tiles == 1:
+            return None
+        else:
+            return letter
+
+    def exchange_tile(self, let):
+        """
+        Puts a given tile back in the "bag of tiles", draws a new tile with the
+        draw_random_tile method, and returns it.
+        """
+        # Increment the number of tiles in the bag for the given letter
+        self.tiles[let] += 1
+        self.number_tiles += 1
+        return self.draw_random_tile()
+
 
 
     def check_valid(self, cells_played):
@@ -99,8 +115,8 @@ class Board:
         is only valid if each letter played is in the set cross_check for that given
         cell and the word as a whole is in the dictionary (trie tree).
         """
-        
-        # Convert cells will return an empty list of cells if the cells played 
+
+        # Convert cells will return an empty list of cells if the cells played
         # are not all in the same row or collumn. In this case the word is false.
         if len(cells_played) == 0:
             return False
@@ -114,10 +130,10 @@ class Board:
         connected = False
         for cell in cells_played:
             if cell.anchor:
-                connected = True 
+                connected = True
 
         if not connected:
-            return False 
+            return False
 
         # If it is single letter just have to check the down checks and across checks
         if len(cells_played) == 1:
@@ -125,7 +141,7 @@ class Board:
             if cell.letter in cell.down_check and cell.letter in cell.across_check:
                 return True
             else:
-                return False              
+                return False
 
         # If it is an across move make sure all cells satisfy their down checks
         word = []
@@ -203,14 +219,14 @@ class Board:
     def across_check(self, row):
         """
         Updates the across_check for every cell in a row on the board. The across_check
-        is all valid letters that can be played so when making a down word through this 
+        is all valid letters that can be played so when making a down word through this
         cell it also forms valid across words.
         """
 
         for cell in self.board[row]:
 
             # The cells in the row have changed (thats why we are recomputting the across check) so must reset the across
-            # check before recomputing the across checks or else we would be restricing to the current state of the 
+            # check before recomputing the across checks or else we would be restricing to the current state of the
             # row and the previous state
             cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
 
@@ -260,7 +276,7 @@ class Board:
             # Cell is empty but adjacent to a placed tile so it canbe the start of a new word
             cell.anchor = True
 
-            # Update the across sum by adding the points for the suffix and prefix 
+            # Update the across sum by adding the points for the suffix and prefix
             cell.across_sum = self.compute_score_already_placed(prefix_cell) + self.compute_score_already_placed(suffix_cell)
             # Update the across check for the cell
             self.dictionary.update_across_check(prefix, suffix, cell)
@@ -268,14 +284,14 @@ class Board:
     def down_check(self, col):
         """
         Updates the down_check for every cell in a collumn on the board. The down_check
-        is all valid letters that can be played so when making an across word through this 
+        is all valid letters that can be played so when making an across word through this
         cell it also forms valid down words.
         """
         for row in self.board:
             cell = row[col]
-            
+
             # The cells in the collum have changed (thats why we are recomputting the down check) so must reset the down
-            # check before recomputing the down checks or else we would be restricting the the to the current state of the 
+            # check before recomputing the down checks or else we would be restricting the the to the current state of the
             # row and the previous state
             cell.down_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
             # If the letter is already placed then skip it
@@ -374,7 +390,7 @@ class Board:
         """
         if len(cells_played) == 1:
             return cells_played
-        
+
         elif cells_played[0].row == cells_played[1].row:
             # If all the cells are not on the same row then send an empty list to valid_word
             # wich will return false
@@ -475,7 +491,7 @@ class Board:
         """
         for row in self.board:
             for cell in row:
-                
+
                 if not cell.anchor:
                     continue
                 else:
@@ -484,7 +500,7 @@ class Board:
                     print("####################   Row: ", cell.row, "  Col:  ", cell.col, "   #####################")
                     print()
 
-                    # Consider the across move                
+                    # Consider the across move
                     row = cell.row
                     col = cell.col
                     curr_cell = self.board[row][col-1]
@@ -498,14 +514,14 @@ class Board:
                             partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
                             col -= 1
                             curr_cell = self.board[row][col]
-                         
+
                         partial_word.reverse()
-                        
+
                         # Traverse the trie tree to get to the correct node
                         node = self.dictionary.root
                         for item in partial_word:
                             node = node.children[item[0]]
-                        
+
 
                         self.generate_suffix(partial_word, rack, cell, "A", node)
 
@@ -517,10 +533,10 @@ class Board:
                             limit += 1
                             col -= 1
                             curr_cell = self.board[row][col]
-    
-                        self.generate_prefix([], limit-1, rack, cell, "A")                  
-                    
-                    # Consider the down move                
+
+                        self.generate_prefix([], limit-1, rack, cell, "A")
+
+                    # Consider the down move
                     row = cell.row
                     col = cell.col
                     curr_cell = self.board[row-1][col]
@@ -536,14 +552,14 @@ class Board:
                             partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
                             row -= 1
                             curr_cell = self.board[row][col]
-                        
+
                         partial_word.reverse()
-                        
+
                         # Traverse the trie tree to get to the correct node
                         node = self.dictionary.root
                         for item in partial_word:
                             node = node.children[item[0]]
-                        
+
 
                         self.generate_suffix(partial_word, rack, cell, "D", node)
 
@@ -555,8 +571,8 @@ class Board:
                             limit += 1
                             row -= 1
                             curr_cell = self.board[row][col]
-    
-                        self.generate_prefix([], limit-1, rack, cell, "D")       
+
+                        self.generate_prefix([], limit-1, rack, cell, "D")
 
     def generate_prefix(self, partial_word, limit, rack, anchor, orientation, node=None):
         """
@@ -596,21 +612,21 @@ class Board:
 
     def generate_suffix(self, partial_word, rack, cell, orientation, node):
         """
-        Will generate all valid suffixes for the partial word and pass them to evaluate move to 
+        Will generate all valid suffixes for the partial word and pass them to evaluate move to
         be ranked.
 
         cell - Current cell on the board we are filling
         node - The node of the trie tree we are in based on the partial_word
         partial_word - The word we have built up so far
         rack - current letter we can build
-        orientation - "A" for across or "D" for down 
+        orientation - "A" for across or "D" for down
         """
         if cell.row == 14 or cell.col == 14:
             if node.terminate:
                 for letter in partial_word:
                     if self.board[letter[1]][letter[2]].anchor:
                         self.evaluate_move(partial_word)
-                        break 
+                        break
 
         elif cell.letter == None:
             if node.terminate:
@@ -653,7 +669,7 @@ class Board:
 
         else:
             if cell.letter in node.children:
-                
+
                 partial_word.append([cell.letter, cell.row, cell.col])
                 row = cell.row
                 col = cell.col
@@ -670,7 +686,7 @@ class Board:
                     curr_cell = self.board[row+1][col]
                 self.generate_suffix(partial_word, rack, curr_cell, orientation, node.children[cell.letter])
                 partial_word.pop()
-                    
+
     def evaluate_move(self, move):
         """
         When give a list of cells which represents a valid move this fucnction
@@ -706,8 +722,8 @@ class Board:
 
     def best_move_cell(self):
         """
-        Method to retrieve the best move in the form of list of cells after they have been calculate 
-        for a particular rack and board state. 
+        Method to retrieve the best move in the form of list of cells after they have been calculate
+        for a particular rack and board state.
         """
 
         move_cell = []
@@ -715,13 +731,4 @@ class Board:
             self.board[letter[1]][letter[2]].letter = letter[0]
             move_cell.append(self.board[letter[1]][letter[2]])
 
-        return move_cell            
-
-
-
-
-
-
-
-
-
+        return move_cell

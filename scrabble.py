@@ -4,7 +4,7 @@ from pygame.locals import *
 
 
 class Player:
-    def __init__(self, board, name):
+    def __init__(self, board, name, is_computer):
         self.rack = []
         self.score = 0
         self.board = board
@@ -15,6 +15,8 @@ class Player:
         self.tile_selected = False
         # dictionary for tiles to exchange: key is rack index, value is letter
         self.tiles_to_exchange = {}
+        # True if the player is a computer player, false if the player is a human player
+        self.is_computer = is_computer
 
         self.init_rack()
 
@@ -23,7 +25,6 @@ class Player:
         self.board.board[col][row].letter = self.rack[rack_tile]
         self.placed_tiles[self.selected_tile] = (self.rack[self.selected_tile], (col, row))
         self.rack[self.selected_tile] = ''
-        pass
 
     # looks in the placed_tiles dictionary, checks if it's a word
     # if it is, then it plays the word and returns true
@@ -43,10 +44,8 @@ class Player:
             print(t.letter)
 
         if self.board.check_valid(tiles_played):
-            print(True)
 
             self.board.cross_checks_sums(tiles_played)
-            score = self.board.compute_score(tiles_played)
             self.score += self.board.compute_score(tiles_played)
             self.board.placed_cell_cleanup(tiles_played)
 
@@ -56,8 +55,39 @@ class Player:
                 self.rack[t] = new_tiles[t]
             return True
         else:
-            print(False)
             return False
+
+    def play_word_computer(self):
+        new_tiles = {}
+
+        computer_rack = self.rack
+        self.board.generate_moves(computer_rack)
+        tiles = self.board.best_move_cell()
+        self.board.cross_checks_sums(tiles)
+        self.score += self.board.compute_score(tiles)
+        self.board.placed_cell_cleanup(tiles)
+
+
+
+        placed_tiles_computer = []
+
+        for tile in tiles:
+            for i in range(len(computer_rack)):
+                if tile.letter == computer_rack[i]:
+                    if i in placed_tiles_computer:
+                        continue
+                    placed_tiles_computer.append(i)
+                    break
+
+        for t in placed_tiles_computer:
+            new_tile = self.board.draw_random_tile()
+            if new_tile != None:
+                new_tiles[t] = new_tile
+                self.rack[t] = new_tiles[t]
+            else:
+                return False
+
+        return True
 
     # recalls the tiles back to the rack
     # currently does not empty the placed tiles dictionary
@@ -75,6 +105,20 @@ class Player:
     def init_rack(self):
         for i in range(7):
             self.rack.append(self.board.draw_random_tile())
+
+
+    # exchanges the tiles that are in the "tiles_to_exchange" attribute
+    # returns true if one or more tiles were exchanged
+    def exchange_tiles(self):
+        if len(self.tiles_to_exchange) != 0:
+            for tile_ind, tile_let in self.tiles_to_exchange.items():
+                self.rack.remove(tile_let)
+                new_tile = self.board.exchange_tile(tile_let)
+                if new_tile != None:
+                    self.rack.insert(tile_ind, new_tile)
+            self.tiles_to_exchange = {}
+            return True
+
 
 class Human:
     def __init__(self):
@@ -94,16 +138,12 @@ class Game:
     def __init__(self, screen, background):
         self.screen = screen
         self.surface = background
-<<<<<<< HEAD
-        self.board = Board('dictionary.txt')
-        self.players = [Player(self.board, 'Cody'), Player(self.board, 'Kai'), Player(self.board, 'Computer1'), Player(self.board, 'Computer2')]
-=======
         self.board = Board('dictionary.txt', 2)
-        self.players = [Player(self.board, 'Cody'), Player(self.board, 'Kai')]
->>>>>>> ff7d804849f78e3380bc73502d2665a2f1ddc7ac
+        self.players = [Player(self.board, 'Cody', True), Player(self.board, 'Kai', True)]
         self.current_player_number = 0
         self.current_player = self.players[self.current_player_number]
         self.running = True
+        self.end_game = False
         self.exchanging = False
         self.tile_size = (self.surface.get_width()-200)/15
         self.text_color = (10, 10, 10)
@@ -111,52 +151,52 @@ class Game:
 
     def play_game(self):
 
-        self.board.board[7][7].letter = 'F'
-        self.board.board[7][8].letter = 'E'
-        self.board.board[7][9].letter = 'A'
-        self.board.board[7][10].letter = 'R'
-        cells_played = [self.board.board[7][7], self.board.board[7][8], self.board.board[7][9], self.board.board[7][10]]
-        cells_played = self.board.convert_cells_played(cells_played)
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        self.board.cross_checks_sums(cells_played)
-        score = self.board.compute_score(cells_played)
-        print("score: ", score)
-        self.board.placed_cell_cleanup(cells_played)
-
-        self.board.board[6][9].letter = 'T'
-        self.board.board[8][9].letter = 'R'
-        self.board.board[9][9].letter = 'N'
-        cells_played = [self.board.board[6][9], self.board.board[8][9], self.board.board[9][9]]
-        cells_played = self.board.convert_cells_played(cells_played)
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        self.board.cross_checks_sums(cells_played)
-        score = self.board.compute_score(cells_played)
-        print("score: ", score)
-        self.board.placed_cell_cleanup(cells_played)
-
-        self.board.board[7][11].letter = 'E'
-        self.board.board[7][12].letter = 'D'
-        cells_played = [self.board.board[7][11], self.board.board[7][12]]
-        cells_played = self.board.convert_cells_played(cells_played)
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        self.board.cross_checks_sums(cells_played)
-        score = self.board.compute_score(cells_played)
-        print("score: ", score)
-        self.board.placed_cell_cleanup(cells_played)
-
-        self.board.board[6][11].letter = 'T'
-        self.board.board[8][11].letter = 'A'
-        cells_played = [self.board.board[6][11], self.board.board[8][11]]
-        cells_played = self.board.convert_cells_played(cells_played)
-        valid = self.board.check_valid(cells_played)
-        print(valid)
-        self.board.cross_checks_sums(cells_played)
-        score = self.board.compute_score(cells_played)
-        print("score: ", score)
-        self.board.placed_cell_cleanup(cells_played)
+        # self.board.board[7][7].letter = 'F'
+        # self.board.board[7][8].letter = 'E'
+        # self.board.board[7][9].letter = 'A'
+        # self.board.board[7][10].letter = 'R'
+        # cells_played = [self.board.board[7][7], self.board.board[7][8], self.board.board[7][9], self.board.board[7][10]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+        #
+        # self.board.board[6][9].letter = 'T'
+        # self.board.board[8][9].letter = 'R'
+        # self.board.board[9][9].letter = 'N'
+        # cells_played = [self.board.board[6][9], self.board.board[8][9], self.board.board[9][9]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+        #
+        # self.board.board[7][11].letter = 'E'
+        # self.board.board[7][12].letter = 'D'
+        # cells_played = [self.board.board[7][11], self.board.board[7][12]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
+        #
+        # self.board.board[6][11].letter = 'T'
+        # self.board.board[8][11].letter = 'A'
+        # cells_played = [self.board.board[6][11], self.board.board[8][11]]
+        # cells_played = self.board.convert_cells_played(cells_played)
+        # valid = self.board.check_valid(cells_played)
+        # print(valid)
+        # self.board.cross_checks_sums(cells_played)
+        # score = self.board.compute_score(cells_played)
+        # print("score: ", score)
+        # self.board.placed_cell_cleanup(cells_played)
 
         # self.board.board[7][6].letter = 'H'
         # self.board.board[7][7].letter = 'E'
@@ -171,7 +211,7 @@ class Game:
         # # and not the ones already on the board. This function will order them and fill
         # # in any of the letters on the board to complete the word.
         # cells_played = self.board.convert_cells_played(cells_played)
-        
+
         # # Returns a True if the cells played were true and false if they were not
         # valid = self.board.check_valid(cells_played)
         # print(valid)
@@ -184,28 +224,31 @@ class Game:
         # # Run after previous commands
         # self.board.placed_cell_cleanup(cells_played)
 
-        test_rack = ['B', 'H', 'A', 'Z', 'E', 'O', 'L']
+        # test_rack = ['B', 'H', 'A', 'Z', 'E', 'O', 'L']
 
-        # Fist call generate moves wich will find the best move given the current state of the 
-        # board and the rack that is passed to it. Note this function will not return anything 
-        # to access the best move use self.board.best_move_cell()
-        self.board.generate_moves(test_rack)
-
-        # You probably won't need these they are more my functions
-        print("Best Move: ", self.board.best_move)
-        print("Best Score: ", self.board.best_score)
-
-        # Use this function after generate_moves to get a list of cells which represents the 
-        # best move that can be played
-        cells = self.board.best_move_cell()
-    
-        # You can then play the list of cells as normal. You do not need to to call check_valid or convert_cell
-        # as ever move the computer makes should be valid. However it is ok if you do. Make sure to still
-        # update cross_checks_sums and call the placed_clean_up
-        self.board.cross_checks_sums(cells)
-        score = self.board.compute_score(cells)
-        print(score)
-        self.board.placed_cell_cleanup(cells)
+        # test_rack = self.current_player.rack
+        #
+        # # Fist call generate moves wich will find the best move given the current state of the
+        # # board and the rack that is passed to it. Note this function will not return anything
+        # # to access the best move use self.board.best_move_cell()
+        # self.board.generate_moves(test_rack)
+        #
+        # # You probably won't need these they are more my functions
+        # print("Best Move: ", self.board.best_move)
+        # print("Best Score: ", self.board.best_score)
+        #
+        # # Use this function after generate_moves to get a list of cells which represents the
+        # # best move that can be played
+        # cells = self.board.best_move_cell()
+        # print(cells)
+        #
+        # # You can then play the list of cells as normal. You do not need to to call check_valid or convert_cell
+        # # as ever move the computer makes should be valid. However it is ok if you do. Make sure to still
+        # # update cross_checks_sums and call the placed_clean_up
+        # self.board.cross_checks_sums(cells)
+        # score = self.board.compute_score(cells)
+        # print(score)
+        # self.board.placed_cell_cleanup(cells)
 
 
         # self.board.board[9][9].letter = 'T'
@@ -226,9 +269,18 @@ class Game:
         # # Run after previous commands
         # self.board.placed_cell_cleanup(cells_played)
 
+        import time
+
         self.draw_init()
         while self.running:
             self.handle_event()
+            if self.current_player.is_computer and not self.end_game:
+                if self.current_player.play_word_computer():
+                    self.handle_endturn()
+                    self.draw_board()
+                    time.sleep(0.5)
+                else:
+                    self.end_game = True
             self.draw_update()
 
     def draw_tile(self, i, j):
@@ -357,7 +409,7 @@ class Game:
         font = pygame.font.Font(None, 22)
         for i in range(len(self.players)):
             letter = font.render(str(self.players[i].score), 1, self.text_color)
-            self.surface.blit(letter, (10+self.tile_size*20, 40+self.tile_size*i))
+            self.surface.blit(letter, (10+self.tile_size*19, 40+self.tile_size*i))
 
     def draw_current_player(self):
         font = pygame.font.Font(None, 22)
@@ -466,13 +518,7 @@ class Game:
                     self.draw_selected_rack_tile(i)
 
     def handle_exchange(self):
-        if len(self.current_player.tiles_to_exchange) != 0:
-            for tile in self.current_player.tiles_to_exchange:
-                print(self.current_player.rack)
-                self.current_player.rack.remove(self.current_player.tiles_to_exchange[tile])
-                self.current_player.rack.insert(tile, self.board.draw_random_tile())
-
-            self.current_player.tiles_to_exchange = {}
+        if self.current_player.exchange_tiles():
             self.handle_endturn()
         self.draw_rack()
 
