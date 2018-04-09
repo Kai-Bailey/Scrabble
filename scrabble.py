@@ -63,6 +63,7 @@ class Player:
         computer_rack = self.rack
         self.board.generate_moves(computer_rack)
         tiles = self.board.best_move_cell()
+        tiles = self.board.convert_cells_played(tiles)
         self.board.cross_checks_sums(tiles)
         self.score += self.board.compute_score(tiles)
         self.board.placed_cell_cleanup(tiles)

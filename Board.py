@@ -3,6 +3,7 @@ from copy import deepcopy
 from Cell import *
 import random
 
+# A dict of the letters and their corresponding value
 letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                 'H': 4, 'I': 1, 'J':8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1,
                 'P': 3, 'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U':1, 'V': 4, 'W': 4,
@@ -20,6 +21,7 @@ class Board:
         self.turn = 0
         # "Bag of Tiles" left for the players to randomly choose from
         self.tiles = {'E':12, 'A':9, 'I':9, 'O':8, 'N':6, 'R':6, 'T':6, 'L':4, 'S':4, 'U':4, 'D':4, 'G':3, 'B':2, 'C':2, 'M':2, 'P':2, 'F':2, 'H':2, 'V':2, 'W':2, 'Y':2, 'K':1, 'J':1, 'X':1, 'Q':1, 'Z':1}
+        # Number of tiles left in the game
         self.number_tiles = 98
 
         # A trie tree of all the valid words to be used in the game
@@ -46,7 +48,8 @@ class Board:
         triple_letter = set([(1,5), (1,9), (5,1), (5,5), (5,9), (5,13), (5,1), (9,1), (9,5), (9,9), (9,13), (13,5), (13,9) ])
         double_letter = set([(0,3), (0,11), (2,6), (2,8), (3,0), (3,7), (3,14), (6,2), (6,6), (6,8), (6,12), (7,3), (7,11), (8,2), (8,6), (8,8), (8,12), (14,3), (14,11), (12,6), (12,8), (11,0), (11,7), (11,14)])
 
-        # Iterate through all cells on the board check if the are double/triple word/letter or centre
+        # Iterate through all cells on the board check if the are double/triple word/letter or centre and modify the
+        # cell accordingly
         for i in range(15):
             self.board.append([])
             for j in range(15):
@@ -121,12 +124,12 @@ class Board:
         if len(cells_played) == 0:
             return False
 
-        # A cheeky way to ensure that the first cell played is greater than 1
+        # A cheeky way to ensure that the first word played is at least one long greater than 1
         if self.number_tiles == 98-7*(self.players):
             if len(cells_played) == 1:
                 return False
 
-        # Ensure that atleast one letter is connected to the others on the board
+        # Ensure that at least one letter is connected to the others on the board
         connected = False
         for cell in cells_played:
             if cell.anchor:
@@ -177,20 +180,23 @@ class Board:
         score = 0
         word_multiplier = 1
 
+        # If only one letter is played just have to add the cross_sum and down_sum of that
+        # letter plus the  value of the letter played for each word modified
         if len(cells_played) == 1:
             for cell in cells_played:
-                # score += letter_scores[cell.letter] * cell.letter_mul
                 if cell.down_sum > 0:
                     score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
                 if cell.across_sum > 0:
                     score += cell.across_sum + letter_scores[cell.letter] * cell.letter_mul
                 word_multiplier *= cell.word_mul
+        # If an across word is played then add the value of the word played and any down_sums
         elif cells_played[0].row == cells_played[1].row:
                 for cell in cells_played:
                     score += letter_scores[cell.letter] * cell.letter_mul
                     if cell.down_sum > 0:
                         score += cell.down_sum + letter_scores[cell.letter] * cell.letter_mul
                     word_multiplier *= cell.word_mul
+        # If a down word is played then add the value of the down word plus any across_sums
         else:
             for cell in cells_played:
                 score += letter_scores[cell.letter] * cell.letter_mul
@@ -510,8 +516,10 @@ class Board:
                     # Adjacent cell to the left is filled so just build the suffix
                     if curr_cell.letter != None:
                         col -= 1
-                        while curr_cell.letter != None and col > 0:
+                        while curr_cell.letter != None:
                             partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
+                            if col == 0:
+                                break
                             col -= 1
                             curr_cell = self.board[row][col]
 
@@ -548,10 +556,13 @@ class Board:
                     # Adjacent cell above is filled so just build the suffix
                     if curr_cell.letter != None:
                         row -= 1
-                        while curr_cell.letter != None and row > 0:
+                        while curr_cell.letter != None:
                             partial_word.append([curr_cell.letter, curr_cell.row, curr_cell.col])
+                            if row == 0:
+                                break
                             row -= 1
                             curr_cell = self.board[row][col]
+                            
 
                         partial_word.reverse()
 
@@ -621,7 +632,7 @@ class Board:
         rack - current letter we can build
         orientation - "A" for across or "D" for down
         """
-        if cell.row == 14 or cell.col == 14:
+        if cell.row > 13 or cell.col > 13:
             if node.terminate:
                 for letter in partial_word:
                     if self.board[letter[1]][letter[2]].anchor:
