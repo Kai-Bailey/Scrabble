@@ -9,10 +9,15 @@ class Game:
         self.screen = screen
         self.surface = background
         self.board = Board('dictionary.txt', 2)
-        self.players = [Player(self.board, 'Cody', False), Player(self.board, 'Kai', True)]
+        # dictionary for player types: key is player number, value is type in string
+        self.player_types = {1:'Human', 2:'CPU', 3:'None', 4:'None'}
+        # list of the players of the Player class
+        self.players = []
         self.current_player_number = 0
-        self.current_player = self.players[self.current_player_number]
+        self.current_player = None
+        self.winner = None
         self.running = True
+        self.menu_screen = True
         self.end_game = False
         self.exchanging = False
         self.tile_size = (self.surface.get_width()-200)/15
@@ -22,128 +27,21 @@ class Game:
 
 
     def play_game(self):
+        # draw the menu screen
+        self.draw_menu_screen()
+        while self.menu_screen:
+            self.handle_menu_event()
+            self.draw_update()
 
-        # self.board.board[7][7].letter = 'F'
-        # self.board.board[7][8].letter = 'E'
-        # self.board.board[7][9].letter = 'A'
-        # self.board.board[7][10].letter = 'R'
-        # cells_played = [self.board.board[7][7], self.board.board[7][8], self.board.board[7][9], self.board.board[7][10]]
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # self.board.cross_checks_sums(cells_played)
-        # score = self.board.compute_score(cells_played)
-        # print("score: ", score)
-        # self.board.placed_cell_cleanup(cells_played)
+        if self.running:
+            # clear the screen
+            self.surface.fill((188, 255, 243))
+            self.draw_gameplay()
 
-        # self.board.board[6][9].letter = 'T'
-        # self.board.board[8][9].letter = 'R'
-        # self.board.board[9][9].letter = 'N'
-        # cells_played = [self.board.board[6][9], self.board.board[8][9], self.board.board[9][9]]
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # self.board.cross_checks_sums(cells_played)
-        # score = self.board.compute_score(cells_played)
-        # print("score: ", score)
-        # self.board.placed_cell_cleanup(cells_played)
-
-        # self.board.board[7][11].letter = 'E'
-        # self.board.board[7][12].letter = 'D'
-        # cells_played = [self.board.board[7][11], self.board.board[7][12]]
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # self.board.cross_checks_sums(cells_played)
-        # score = self.board.compute_score(cells_played)
-        # print("score: ", score)
-        # self.board.placed_cell_cleanup(cells_played)
-
-        # self.board.board[6][11].letter = 'T'
-        # self.board.board[8][11].letter = 'A'
-        # cells_played = [self.board.board[6][11], self.board.board[8][11]]
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # self.board.cross_checks_sums(cells_played)
-        # score = self.board.compute_score(cells_played)
-        # print("score: ", score)
-        # self.board.placed_cell_cleanup(cells_played)
-
-        # self.board.board[7][6].letter = 'H'
-        # self.board.board[7][7].letter = 'E'
-        # self.board.board[7][8].letter = 'L'
-        # self.board.board[7][9].letter = 'L'
-        # self.board.board[7][10].letter = 'O'
-
-        # cells_played = [self.board.board[7][6], self.board.board[7][7], self.board.board[7][8], \
-        # self.board.board[7][9], self.board.board[7][10]]
-
-        # # The cells played list can be in an order with just the cells that were played
-        # # and not the ones already on the board. This function will order them and fill
-        # # in any of the letters on the board to complete the word.
-        # cells_played = self.board.convert_cells_played(cells_played)
-
-        # # Returns a True if the cells played were true and false if they were not
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # # Updates the acrsoss/down checks and sum. Must be called after check_valid and only
-        # # if the word is actully valid
-        # self.board.cross_checks_sums(cells_played)
-        # # Returns the score of the tiles played
-        # score = self.board.compute_score(cells_played)
-        # print(score)
-        # # Run after previous commands
-        # self.board.placed_cell_cleanup(cells_played)
-
-        # test_rack = ['S', 'E', 'T', 'Z', 'A', 'U', 'D']
-
-        # # Fist call generate moves wich will find the best move given the current state of the
-        # # board and the rack that is passed to it. Note this function will not return anything
-        # # to access the best move use self.board.best_move_cell()
-        # self.board.generate_moves(test_rack)
-
-        # # You probably won't need these they are more my functions
-        # print("Best Move: ", self.board.best_move)
-        # print("Best Score: ", self.board.best_score)
-
-        # # Use this function after generate_moves to get a list of cells which represents the
-        # # best move that can be played
-        # cells = self.board.best_move_cell()
-
-        # # You can then play the list of cells as normal. You do not need to to call check_valid or convert_cell
-        # # as ever move the computer makes should be valid. However it is ok if you do. Make sure to still
-        # # update cross_checks_sums and call the placed_clean_up
-        # self.board.cross_checks_sums(cells)
-        # score = self.board.compute_score(cells)
-        # print(score)
-        # self.board.placed_cell_cleanup(cells)
-
-
-        # self.board.board[9][9].letter = 'T'
-        # self.board.board[11][9].letter = 'A'
-        # self.board.board[12][9].letter = 'M'
-        #
-        # cells_played = [self.board.board[11][9], self.board.board[12][9], self.board.board[9][9]]
-        #
-        # cells_played = self.board.convert_cells_played(cells_played)
-        # # Returns a True if the cells played were true and false if they were not
-        # valid = self.board.check_valid(cells_played)
-        # print(valid)
-        # # Updates the acrsoss/down checks and sum. Must be called after check_valid
-        # self.board.cross_checks_sums(cells_played)
-        # # Returns the score of the tiles played
-        # score = self.board.compute_score(cells_played)
-        # print(score)
-        # # Run after previous commands
-        # self.board.placed_cell_cleanup(cells_played)
-
-        # initialize the drawings
-        self.draw_init()
         # while the game is running
         while self.running:
             # handle any events
-            self.handle_event()
+            self.handle_gameplay_event()
             # if the current player is a computer player
             if self.current_player.is_computer and not self.end_game:
                 # if the current player
@@ -153,6 +51,8 @@ class Game:
                     time.sleep(0.5)
                 else:
                     self.end_game = True
+                    self.draw_scoreboard()
+                    self.handle_winner()
             self.draw_update()
 
     def draw_tile(self, row, col):
@@ -355,8 +255,8 @@ class Game:
         # clear all for redrawing
         rect_scoreboard = pygame.Rect((self.tile_size*15, 0, (self.tile_size-1)*6, (self.tile_size-1)*10))
         pygame.draw.rect(self.surface, (188, 255, 243), rect_scoreboard)
-        font = pygame.font.Font(None, 28)
         # draw the scoreboard text
+        font = pygame.font.Font(None, 28)
         text_scoreboard = font.render('Scoreboard', 1, self.text_color)
         self.surface.blit(text_scoreboard, (10+self.tile_size*16, 10))
         # draw the scoreboard information
@@ -364,6 +264,95 @@ class Game:
         self.draw_player_scores()
         self.draw_current_player()
         self.draw_tiles_left()
+
+    def draw_winner(self):
+        font = pygame.font.Font(None, 22)
+        text_winner = font.render('Winner: ' + self.winner + '!', 1, self.text_color)
+        self.surface.blit(text_winner, (10+self.tile_size*16, 40+self.tile_size*8))
+
+    def handle_player_type_select(self, pos):
+        for i in range(1,5):
+            rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*i, 40, 30)
+            if rect.collidepoint(pos):
+                if i < 3:
+                    if self.player_types[i] == 'Human':
+                        self.draw_player_type(i, 'CPU')
+                        self.player_types[i] = 'CPU'
+                    elif self.player_types[i] == 'CPU':
+                        self.draw_player_type(i, 'Human')
+                        self.player_types[i] = 'Human'
+                else:
+                    if self.player_types[i] == 'Human':
+                        self.draw_player_type(i, 'CPU')
+                        self.player_types[i] = 'CPU'
+                    elif self.player_types[i] == 'CPU':
+                        self.draw_player_type(i, 'None')
+                        self.player_types[i] = 'None'
+                    elif self.player_types[i] == 'None':
+                        self.draw_player_type(i, 'Human')
+                        self.player_types[i] = 'Human'
+
+
+    def handle_menu_play(self):
+        for num, type in self.player_types.items():
+            if type == 'CPU':
+                self.players.append(Player(self.board, 'Player ' + str(num), True))
+            elif type == 'Human':
+                self.players.append(Player(self.board, 'Player ' + str(num), False))
+
+        self.current_player = self.players[self.current_player_number]
+        self.menu_screen = False
+
+
+
+    def draw_player_type(self, player, type):
+        rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*player, 40, 30)
+        if type == 'Human':
+            pygame.draw.rect(self.surface, (250, 255, 0), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('Human', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 43, 89 + 40*player))
+
+
+        elif type == 'CPU':
+            pygame.draw.rect(self.surface, (255, 72, 0), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('CPU', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 50, 89 + 40*player))
+
+
+        else:
+            pygame.draw.rect(self.surface, (184, 184, 184), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('None', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 47, 89 + 40*player))
+
+            self.player_types[player] = 'None'
+
+
+    def draw_menu_screen(self):
+        font = pygame.font.Font(None, 60)
+        text_scrabble = font.render('Scrabble', 1, self.text_color)
+        self.surface.blit(text_scrabble, (self.surface.get_width()/2 - 85, 40))
+
+        for player in range(1,5):
+            # draw player names
+            font = pygame.font.Font(None, 28)
+            text_player = font.render('Player '+str(player), 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 - 72, 85 + 40*player))
+            if player == 1:
+                self.draw_player_type(player, 'Human')
+            elif player == 2:
+                self.draw_player_type(player, 'CPU')
+            else:
+                self.draw_player_type(player, 'None')
+
+        # draw play game button
+        rect = pygame.Rect(self.surface.get_width()/2 - 85, 40*8, self.surface.get_width()/4, 50)
+        pygame.draw.rect(self.surface, (66, 244, 69), rect)
+        font = pygame.font.Font(None, 32)
+        text_play = font.render('Play Game', 1, self.text_color)
+        self.surface.blit(text_play, (self.surface.get_width()/2 - 55, 40*8.3))
 
     def draw_update(self):
         """
@@ -373,9 +362,9 @@ class Game:
         pygame.display.flip()
 
 
-    def draw_init(self):
+    def draw_gameplay(self):
         """
-        Initializes all drawings when the game starts.
+        Draws all gameplay drawings when the game starts.
         """
         self.draw_board()
         self.draw_rack()
@@ -385,6 +374,14 @@ class Game:
         self.draw_skip()
         self.draw_update()
         self.draw_scoreboard()
+
+    def handle_winner(self):
+        max_player_score = 0
+        for player in self.players:
+            if player.score > max_player_score:
+                max_player_score = player.score
+                self.winner = player.name
+        self.draw_winner()
 
 
 
@@ -494,7 +491,28 @@ class Game:
             self.handle_endturn()
         self.draw_rack()
 
-    def handle_event(self):
+    def handle_menu_event(self):
+        """
+        Handles events in the menu.
+        """
+        # grab event
+        event = pygame.event.poll()
+        # if the user clicks exit, then set self.running to false
+        if event.type == QUIT:
+            self.menu_screen = False
+            self.running = False
+        # if the user clicks the mouse button down
+        elif event.type == MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            play_game = pygame.Rect(self.surface.get_width()/2 - 85, 40*8, self.surface.get_width()/4, 50)
+            if play_game.collidepoint(pos):
+                self.handle_menu_play()
+            else:
+                self.handle_player_type_select(pos)
+
+
+
+    def handle_gameplay_event(self):
         """
         Handles events in the game. When the user clicks in the screen, it check
         if it has clicked on an area corresponding to a button or a tile.
@@ -505,7 +523,7 @@ class Game:
         if event.type == QUIT:
             self.running = False
         # if the user clicks the mouse button down
-        elif event.type == MOUSEBUTTONDOWN:
+        elif event.type == MOUSEBUTTONDOWN and not self.end_game:
             pos = pygame.mouse.get_pos()
             # Rects to check if the mouse location when clicked corresponds to some game function
             recall = pygame.Rect((self.tile_size*1, self.tile_size*15.5, (self.tile_size-1)*2, self.tile_size-1))
@@ -554,7 +572,6 @@ class Game:
             # if tile is selected from the rack then handle placing it on the board
             elif self.current_player.tile_selected:
                 self.handle_place_tile(pos)
-
 
 def main():
     # initialize pygame
