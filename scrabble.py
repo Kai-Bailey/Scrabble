@@ -75,6 +75,7 @@ class Player:
         # from the rack, get the word to be played, and add the score
         computer_rack = self.rack
         self.board.generate_moves(computer_rack)
+<<<<<<< HEAD
         # tiles that make up the word in the board
         word_tiles = self.board.best_move_cell()
         self.board.cross_checks_sums(word_tiles)
@@ -84,6 +85,19 @@ class Player:
         # from the tiles of the word formed on the board, retrieves the indices
         # of which tiles were the ones that were played from the rack
         for tile in word_tiles:
+=======
+        tiles = self.board.best_move_cell()
+        tiles = self.board.convert_cells_played(tiles)
+        self.board.cross_checks_sums(tiles)
+        self.score += self.board.compute_score(tiles)
+        self.board.placed_cell_cleanup(tiles)
+
+
+
+        placed_tiles_computer = []
+
+        for tile in tiles:
+>>>>>>> 40fa0e2c001c8eeb673553e7b5c66c74d9dc9061
             for i in range(len(computer_rack)):
                 if tile.letter == computer_rack[i]:
                     if i in placed_tiles_computer:
