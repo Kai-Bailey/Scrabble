@@ -26,6 +26,7 @@ scrabble.py - The main file of the program
 Board.py
 Trie.py
 Cell.py
+player.py
 dictionary.txt
 
 
