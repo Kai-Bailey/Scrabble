@@ -1,5 +1,8 @@
 
 class Cell:
+    """
+    Holds information for each cell on the board such as the letter, word/letter multiplier ect.
+    """
     def __init__(self, letter, letter_mul, word_mul, row, col):
         self.letter = letter
         self.word_mul = word_mul

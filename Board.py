@@ -10,6 +10,11 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                  'X': 8, 'Y': 4, 'Z': 10}
 
 class Board:
+    """
+    The board class stores the current state of the board using a 2d array where each element is of type cell. The board
+    class can check if a move is valid, calculate the score of a move, update across and down checks and initialize the
+    board.
+    """
 
     def __init__(self, dict_name):
         # Array of board each inner list is a row and each item in the list is
@@ -502,9 +507,6 @@ class Board:
                     continue
                 else:
 
-                    print()
-                    print("####################   Row: ", cell.row, "  Col:  ", cell.col, "   #####################")
-                    print()
 
                     # Consider the across move
                     row = cell.row
@@ -588,19 +590,23 @@ class Board:
     def generate_prefix(self, partial_word, limit, rack, anchor, orientation, node=None):
         """
         Generates all possible prefixes given the limit and calls generate suffix to see if
-        a valid word can be formed from them.
+        a valid word can be formed from them. Limited by the letters currently in the rack 
+        the down_checks and across_checks for each cell.
         """
         if node == None:
             node = self.dictionary.root
 
+        # Call generate suffix to check if a valid word can be formed from this prefix
         self.generate_suffix(partial_word, rack, anchor, orientation, node)
 
+        # Add a letter to the prefix 
         if limit > 0:
             for letter in node.children:
                 if letter in rack:
                     child = node.children[letter]
                     rack.remove(child.letter)
 
+                    # Add the letter to a possible prefix
                     row = anchor.row
                     col = anchor.col
                     if orientation == "A":
@@ -615,7 +621,7 @@ class Board:
                         for offset in range(len(partial_word)):
                             partial_word[offset][1] = row - (len(partial_word) - offset)
 
-
+                    # Recursively generate the next letter in the prefix
                     self.generate_prefix(partial_word, limit-1, rack, anchor, orientation, child)
                     partial_word.pop()
                     rack.append(child.letter)
@@ -632,6 +638,7 @@ class Board:
         rack - current letter we can build
         orientation - "A" for across or "D" for down
         """
+        # Ensure that the word generated is not off the board
         if cell.row > 13 or cell.col > 13:
             if node.terminate:
                 for letter in partial_word:
@@ -639,14 +646,17 @@ class Board:
                         self.evaluate_move(partial_word)
                         break
 
+        # Next cell is empty so generate another letter for that cell
         elif cell.letter == None:
+
+            # If the last letter terminates, it completes a valid word so test it
             if node.terminate:
                 for letter in partial_word:
                     if self.board[letter[1]][letter[2]].anchor:
                         self.evaluate_move(partial_word)
                         break
 
-
+            # Generate the next letter
             for letter in node.children:
                 if letter in rack:
                     if orientation == "A":
@@ -657,12 +667,12 @@ class Board:
 
                     rack.remove(letter)
 
-                    # cell.letter = letter
                     partial_word.append([letter, cell.row, cell.col])
 
                     row = cell.row
                     col = cell.col
 
+                    # Move to the next cell to the right or down and recursively generate the next letter
                     if orientation == "A":
                         curr_cell = self.board[row][col+1]
                     else:
@@ -672,6 +682,7 @@ class Board:
                     partial_word.pop()
                     rack.append(letter)
 
+        # Next cell already has a letter so usethat letter to continue to build word
         else:
             if cell.letter in node.children:
 
@@ -692,10 +703,6 @@ class Board:
         will calculate the score of the move and stores it in the board attribute
         """
 
-        print("Move Found!", move)
-
-
-
         # Convert to list of cell objects
         move_cell = []
         for letter in move:
@@ -706,14 +713,11 @@ class Board:
 
 
         if not self.check_valid(move_cell):
-            print("Generated Invalid!!!!!!")
-            import time
-            time.sleep(1)
             return
 
         score = self.compute_score(move_cell)
 
-
+        # If the score of the move generated is greater than the best score save it
         if score > self.best_score:
             self.best_score = score
             copy_move = tuple(deepcopy(move))

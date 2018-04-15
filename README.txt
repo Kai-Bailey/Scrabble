@@ -12,10 +12,13 @@ The user can see the score of each player, who's turn it is and the number of ti
 thier tiles will be automatically recalled.
 
 
-Note:
+Notes:
 There are many 2 letter words that are valid in scrabble but not an actual English word. The computer is very good at
 taking advantage of these words to build off words that are already played. If you are unsure whether the computer played a
 valid word or not you can check by using control f in the dictionary.txt file.
+
+To exchange tiles click the exchange tile button then select the tiles you would like to exchange. Once you are done select
+the exchange tile button again. Exchanging tiles will cost you your turn.
 
 
 Included Files:

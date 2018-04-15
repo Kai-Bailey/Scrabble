@@ -5,6 +5,12 @@ from player import *
 import time
 
 class Game:
+    """
+    This class handles the main game mechanics and drawing to screen. It initializes the game using user input
+    from the menu screen. It then loops through each player executing their turn until their are no more tiles
+    left and the game ends.
+    """
+
     def __init__(self, screen, background):
         self.screen = screen
         self.surface = background

@@ -1,4 +1,9 @@
 class Player:
+    """
+    The player class includes functionality such as placing tiles, drawing from the 
+    bag and exchanging tiles. Parent class to Computer and Human.
+    """
+
     def __init__(self, board, name):
         self.board = board
         # name of the player as a string
@@ -82,6 +87,10 @@ class Player:
         return True
 
 class Human(Player):
+    """
+    Inherits from the player class adding the functionality of the play word method.
+    Reads input from the user to determine the move that will be played.
+    """
 
     def play_word(self):
         """
@@ -110,6 +119,10 @@ class Human(Player):
             return False
 
 class Computer(Player):
+    """
+    Inherits from the player class adding the funcitonality of the play_word method. 
+    The computer will be generating a word to play instead of reading input from the user.
+    """
 
     def play_word(self):
         """
