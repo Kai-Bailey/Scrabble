@@ -8,7 +8,7 @@ class Game:
     def __init__(self, screen, background):
         self.screen = screen
         self.surface = background
-        self.board = Board('dictionary.txt', 2)
+        self.board = Board('dictionary.txt')
         # dictionary for player types: key is player number, value is type in string
         self.player_types = {1:'Human', 2:'CPU', 3:'None', 4:'None'}
         # list of the players of the Player class
@@ -27,12 +27,17 @@ class Game:
 
 
     def play_game(self):
+        """
+        Game functionality. Starts the game at the menu screen. After the players
+        have been selected, it handles all gameplay events and updates the drawings.
+        """
         # draw the menu screen
         self.draw_menu_screen()
         while self.menu_screen:
             self.handle_menu_event()
             self.draw_update()
 
+        # change to gameplay screen
         if self.running:
             # clear the screen
             self.surface.fill((188, 255, 243))
@@ -40,20 +45,75 @@ class Game:
 
         # while the game is running
         while self.running:
+
             # handle any events
             self.handle_gameplay_event()
-            # if the current player is a computer player
-            if self.current_player.is_computer and not self.end_game:
-                # if the current player
-                if self.current_player.play_word_computer():
+
+            # if the current player is a computer
+            if isinstance(self.current_player, Computer) and not self.end_game:
+                self.draw_update()
+                # play a word
+                if self.current_player.play_word():
                     self.handle_endturn()
                     self.draw_board()
                     time.sleep(0.5)
                 else:
                     self.end_game = True
-                    self.draw_scoreboard()
-                    self.handle_winner()
+
+            if self.end_game:
+                self.draw_scoreboard()
+                self.handle_winner()
+
             self.draw_update()
+
+    def draw_menu_screen(self):
+        """
+        Draws the Scrabble title, the player names, and the play game button.
+        """
+        font = pygame.font.Font(None, 60)
+        text_scrabble = font.render('Scrabble', 1, self.text_color)
+        self.surface.blit(text_scrabble, (self.surface.get_width()/2 - 85, 40))
+
+        for player in range(1,5):
+            # draw player names
+            font = pygame.font.Font(None, 28)
+            text_player = font.render('Player '+str(player), 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 - 72, 85 + 40*player))
+            if player == 1:
+                self.draw_player_type(player, 'Human')
+            elif player == 2:
+                self.draw_player_type(player, 'CPU')
+            else:
+                self.draw_player_type(player, 'None')
+
+        # draw play game button
+        rect = pygame.Rect(self.surface.get_width()/2 - 85, 40*8, self.surface.get_width()/4, 50)
+        pygame.draw.rect(self.surface, (66, 244, 69), rect)
+        font = pygame.font.Font(None, 32)
+        text_play = font.render('Play Game', 1, self.text_color)
+        self.surface.blit(text_play, (self.surface.get_width()/2 - 55, 40*8.3))
+
+    def draw_player_type(self, player, type):
+        """
+        Draws the player type selection boxes by the player names.
+        """
+        rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*player, 40, 30)
+        if type == 'Human':
+            pygame.draw.rect(self.surface, (250, 255, 0), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('Human', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 43, 89 + 40*player))
+        elif type == 'CPU':
+            pygame.draw.rect(self.surface, (255, 72, 0), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('CPU', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 50, 89 + 40*player))
+        else:
+            pygame.draw.rect(self.surface, (184, 184, 184), rect)
+            font = pygame.font.Font(None, 14)
+            text_player = font.render('None', 1, self.text_color)
+            self.surface.blit(text_player, (self.surface.get_width()/2 + 47, 89 + 40*player))
+            self.player_types[player] = 'None'
 
     def draw_tile(self, row, col):
         """
@@ -266,93 +326,12 @@ class Game:
         self.draw_tiles_left()
 
     def draw_winner(self):
+        """
+        Draws the winner below the scoreboard.
+        """
         font = pygame.font.Font(None, 22)
         text_winner = font.render('Winner: ' + self.winner + '!', 1, self.text_color)
         self.surface.blit(text_winner, (10+self.tile_size*16, 40+self.tile_size*8))
-
-    def handle_player_type_select(self, pos):
-        for i in range(1,5):
-            rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*i, 40, 30)
-            if rect.collidepoint(pos):
-                if i < 3:
-                    if self.player_types[i] == 'Human':
-                        self.draw_player_type(i, 'CPU')
-                        self.player_types[i] = 'CPU'
-                    elif self.player_types[i] == 'CPU':
-                        self.draw_player_type(i, 'Human')
-                        self.player_types[i] = 'Human'
-                else:
-                    if self.player_types[i] == 'Human':
-                        self.draw_player_type(i, 'CPU')
-                        self.player_types[i] = 'CPU'
-                    elif self.player_types[i] == 'CPU':
-                        self.draw_player_type(i, 'None')
-                        self.player_types[i] = 'None'
-                    elif self.player_types[i] == 'None':
-                        self.draw_player_type(i, 'Human')
-                        self.player_types[i] = 'Human'
-
-
-    def handle_menu_play(self):
-        for num, type in self.player_types.items():
-            if type == 'CPU':
-                self.players.append(Player(self.board, 'Player ' + str(num), True))
-            elif type == 'Human':
-                self.players.append(Player(self.board, 'Player ' + str(num), False))
-
-        self.current_player = self.players[self.current_player_number]
-        self.menu_screen = False
-
-
-
-    def draw_player_type(self, player, type):
-        rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*player, 40, 30)
-        if type == 'Human':
-            pygame.draw.rect(self.surface, (250, 255, 0), rect)
-            font = pygame.font.Font(None, 14)
-            text_player = font.render('Human', 1, self.text_color)
-            self.surface.blit(text_player, (self.surface.get_width()/2 + 43, 89 + 40*player))
-
-
-        elif type == 'CPU':
-            pygame.draw.rect(self.surface, (255, 72, 0), rect)
-            font = pygame.font.Font(None, 14)
-            text_player = font.render('CPU', 1, self.text_color)
-            self.surface.blit(text_player, (self.surface.get_width()/2 + 50, 89 + 40*player))
-
-
-        else:
-            pygame.draw.rect(self.surface, (184, 184, 184), rect)
-            font = pygame.font.Font(None, 14)
-            text_player = font.render('None', 1, self.text_color)
-            self.surface.blit(text_player, (self.surface.get_width()/2 + 47, 89 + 40*player))
-
-            self.player_types[player] = 'None'
-
-
-    def draw_menu_screen(self):
-        font = pygame.font.Font(None, 60)
-        text_scrabble = font.render('Scrabble', 1, self.text_color)
-        self.surface.blit(text_scrabble, (self.surface.get_width()/2 - 85, 40))
-
-        for player in range(1,5):
-            # draw player names
-            font = pygame.font.Font(None, 28)
-            text_player = font.render('Player '+str(player), 1, self.text_color)
-            self.surface.blit(text_player, (self.surface.get_width()/2 - 72, 85 + 40*player))
-            if player == 1:
-                self.draw_player_type(player, 'Human')
-            elif player == 2:
-                self.draw_player_type(player, 'CPU')
-            else:
-                self.draw_player_type(player, 'None')
-
-        # draw play game button
-        rect = pygame.Rect(self.surface.get_width()/2 - 85, 40*8, self.surface.get_width()/4, 50)
-        pygame.draw.rect(self.surface, (66, 244, 69), rect)
-        font = pygame.font.Font(None, 32)
-        text_play = font.render('Play Game', 1, self.text_color)
-        self.surface.blit(text_play, (self.surface.get_width()/2 - 55, 40*8.3))
 
     def draw_update(self):
         """
@@ -375,13 +354,47 @@ class Game:
         self.draw_update()
         self.draw_scoreboard()
 
-    def handle_winner(self):
-        max_player_score = 0
-        for player in self.players:
-            if player.score > max_player_score:
-                max_player_score = player.score
-                self.winner = player.name
-        self.draw_winner()
+    def handle_player_type_select(self, pos):
+        """
+        At the menu screen, handles selection of the type of player.
+        """
+        for i in range(1,5):
+            rect = pygame.Rect(self.surface.get_width()/2 + 38, 80 + 40*i, 40, 30)
+            if rect.collidepoint(pos):
+                if i < 3:
+                    # players 1 and 2 can be Human or CPU
+                    if self.player_types[i] == 'Human':
+                        self.draw_player_type(i, 'CPU')
+                        self.player_types[i] = 'CPU'
+                    elif self.player_types[i] == 'CPU':
+                        self.draw_player_type(i, 'Human')
+                        self.player_types[i] = 'Human'
+                else:
+                    # players 3 and 4 can be Human, CPU, or None
+                    if self.player_types[i] == 'Human':
+                        self.draw_player_type(i, 'CPU')
+                        self.player_types[i] = 'CPU'
+                    elif self.player_types[i] == 'CPU':
+                        self.draw_player_type(i, 'None')
+                        self.player_types[i] = 'None'
+                    elif self.player_types[i] == 'None':
+                        self.draw_player_type(i, 'Human')
+                        self.player_types[i] = 'Human'
+
+
+    def handle_menu_play(self):
+        """
+        Handles when the play game button is clicked on the menu screen. Creates
+        the players, and sets menu_screen to False.
+        """
+        for num, type in self.player_types.items():
+            if type == 'CPU':
+                self.players.append(Computer(self.board, 'Player ' + str(num)))
+            elif type == 'Human':
+                self.players.append(Human(self.board, 'Player ' + str(num)))
+
+        self.current_player = self.players[self.current_player_number]
+        self.menu_screen = False
 
 
 
@@ -443,11 +456,16 @@ class Game:
         # if some tiles have been placed
         if self.current_player.placed_tiles != {}:
             if self.current_player.play_word():
-                for t in self.current_player.placed_tiles:
-                    self.draw_rack_tile(t)
-                # change to next player
-                self.current_player.placed_tiles = {}
-                self.handle_endturn()
+                if self.current_player.get_new_tiles():
+                    for t in self.current_player.placed_tiles:
+                        self.draw_rack_tile(t)
+                    # change to next player
+                    self.current_player.placed_tiles = {}
+                    self.handle_endturn()
+                else:
+                    # if there are no more tiles left in the bag, end the game
+                    self.end_game = True
+                    return
             else:
                 self.handle_recall()
 
@@ -489,7 +507,20 @@ class Game:
         """
         if self.current_player.exchange_tiles():
             self.handle_endturn()
+
         self.draw_rack()
+
+    def handle_winner(self):
+        """
+        Sets self.winner to whoever has the highest score. Called when the game
+        has ended.
+        """
+        max_player_score = 0
+        for player in self.players:
+            if player.score > max_player_score:
+                max_player_score = player.score
+                self.winner = player.name
+        self.draw_winner()
 
     def handle_menu_event(self):
         """

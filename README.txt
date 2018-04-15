@@ -1,5 +1,5 @@
 Kai Bailey 1504868
-Cody Gramlich
+Cody Gramlich 1516785
 
 CMPUT 275 Final Project - Scrabble
 
@@ -54,3 +54,6 @@ https://raw.githubusercontent.com/jonbcard/scrabble-bot/master/src/dictionary.tx
 
 Number of points per game for pro scrabble players.
 https://scrabble.hasbro.com/en-us/faq
+
+Pygame documentation.
+https://www.pygame.org/docs/
