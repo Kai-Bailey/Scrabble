@@ -87,9 +87,6 @@ class Board:
             sum_letters += num_left
             if sum_letters > rand_ind:
                 letter = let
-                # if self.tiles[let] == 1:
-                #     self.tiles.pop(let)
-                # else:
                 self.tiles[let] -= 1
                 break
 
@@ -124,7 +121,7 @@ class Board:
         if len(cells_played) == 0:
             return False
 
-        # A cheeky way to ensure that the first word played is at least one long greater than 1
+        # A cheeky way to ensure that the first word played is at least two letters
         if self.number_tiles == 98-7*(self.players):
             if len(cells_played) == 1:
                 return False
@@ -232,8 +229,8 @@ class Board:
         for cell in self.board[row]:
 
             # The cells in the row have changed (thats why we are recomputting the across check) so must reset the across
-            # check before recomputing the across checks or else we would be restricing to the current state of the
-            # row and the previous state
+            # check before recomputing the across checks or else we would be restricting to the current state of the
+            # row and the previous state of the row
             cell.across_check = set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
 
             # If the letter is already placed then skip
@@ -279,7 +276,7 @@ class Board:
             if prefix == '' and suffix == '':
                 continue
 
-            # Cell is empty but adjacent to a placed tile so it canbe the start of a new word
+            # Cell is empty but adjacent to a placed tile so it can be the start of a new word
             cell.anchor = True
 
             # Update the across sum by adding the points for the suffix and prefix
@@ -358,13 +355,18 @@ class Board:
         empty adjacent cells.
         """
 
+        # If one cell is played just update that row and collumn
         if len(cells_played) == 1:
             self.down_check(cells_played[0].col)
             self.across_check(cells_played[0].row)
+        # If an across move is played then update the row and all of the collumns with 
+        # that have a new letter
         elif cells_played[0].row == cells_played[1].row:
             self.across_check(cells_played[0].row)
             for cell in cells_played:
                 self.down_check(cell.col)
+        # If a down move is played then update the collumn and all of the rows that 
+        # have a new letter
         else:
             self.down_check(cells_played[0].col)
             for cell in cells_played:
@@ -663,12 +665,6 @@ class Board:
                     row = cell.row
                     col = cell.col
 
-                    # Ensure that the word is not built off of the board
-                    # if row > 13 or col >13:
-                    #     node = node.children[letter]
-                    #     if node.terminate:
-                    #         self.evaluate_move(partial_word)
-                    # else:
                     if orientation == "A":
                         curr_cell = self.board[row][col+1]
                     else:
@@ -685,12 +681,6 @@ class Board:
                 row = cell.row
                 col = cell.col
 
-                # # Ensure that the word is not built off of the board
-                # if row > 13 or col > 13:
-                #     node = node.children[cell.letter]
-                #     if node.terminate:
-                #         self.evaluate_move(partial_word)
-                # else:
                 if orientation == "A":
                     curr_cell = self.board[row][col+1]
                 else:

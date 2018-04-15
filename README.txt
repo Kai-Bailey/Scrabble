@@ -5,7 +5,7 @@ CMPUT 275 Final Project - Scrabble
 
 Description:
 This project is a recreation of the popular game of scrabble. This game features a challenging computer player that users can
-test their skills against. When two computer players play against each other they consistently scores over 300 points per game. 
+test their skills against. When two computer players play against each other they consistently scores around 300 points per game. 
 According to the hasbro's website the top 300 players in the world "average between 330-450 points per game". Users can choose
 up to 4 players with any combination of computer players and human players. They can easily place, recall or exchange tiles. 
 The user can see the score of each player, who's turn it is and the number of tiles left.
