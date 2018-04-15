@@ -11,12 +11,10 @@ letter_scores = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Board:
 
-    def __init__(self, dict_name, number_players):
+    def __init__(self, dict_name):
         # Array of board each inner list is a row and each item in the list is
         # an instance of class cell
         self.board = []
-        # List of players playing the game
-        self.players = number_players
         # Index in list players of whos turn it is
         self.turn = 0
         # "Bag of Tiles" left for the players to randomly choose from
@@ -121,8 +119,8 @@ class Board:
         if len(cells_played) == 0:
             return False
 
-        # A cheeky way to ensure that the first word played is at least two letters
-        if self.number_tiles == 98-7*(self.players):
+        # A cheeky way to ensure that the first word played is at least one long greater than 1
+        if self.number_tiles == 98-7*(2):
             if len(cells_played) == 1:
                 return False
 
@@ -564,7 +562,7 @@ class Board:
                                 break
                             row -= 1
                             curr_cell = self.board[row][col]
-                            
+
 
                         partial_word.reverse()
 

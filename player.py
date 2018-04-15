@@ -1,5 +1,5 @@
 class Player:
-    def __init__(self, board, name, is_computer):
+    def __init__(self, board, name):
         self.board = board
         # name of the player as a string
         self.name = name
@@ -14,7 +14,6 @@ class Player:
         # dictionary for tiles to exchange: key is rack index, value is letter
         self.tiles_to_exchange = {}
         # True if the player is a computer player, false if the player is a human player
-        self.is_computer = is_computer
         # initialize the rack
         self.init_rack()
 
@@ -28,13 +27,68 @@ class Player:
         # set the rack tile to an empty string
         self.rack[self.selected_tile] = ''
 
+    def recall(self):
+        """
+        Recalls the tiles back to the player's rack.
+        Does not empty the placed_tiles dictionary.
+        """
+        for t in self.placed_tiles:
+            row = self.placed_tiles[t][1][0]
+            col = self.placed_tiles[t][1][1]
+            # remove tiles from board
+            self.board.board[row][col].letter = None
+            # put tiles back on rack
+            self.rack[t] = self.placed_tiles[t][0]
+
+    def init_rack(self):
+        """
+        Initializes the rack by drawing 7 tiles from the bag.
+        """
+        for i in range(7):
+            self.rack.append(self.board.draw_random_tile())
+
+
+    def exchange_tiles(self):
+        """
+        Exchanges the tiles that are in the "tiles_to_exchange" attribute.
+        Returns true if one or more tiles were exchanged.
+        """
+        if len(self.tiles_to_exchange) != 0:
+            for tile_ind, tile_let in self.tiles_to_exchange.items():
+                # remove tile from rack
+                self.rack.remove(tile_let)
+                # put tile back in the bag and draw a new one
+                new_tile = self.board.exchange_tile(tile_let)
+                if new_tile != None:
+                    # put the tile in the rack where the previous one was
+                    self.rack.insert(tile_ind, new_tile)
+
+            # clear the tiles to exchange dictionary
+            self.tiles_to_exchange = {}
+            return True
+        else:
+            return False
+
+    def get_new_tiles(self):
+        new_tiles = {}
+        # get new tiles and put on rack
+        for t in self.placed_tiles:
+            new_tile = self.board.draw_random_tile()
+            if new_tile != None:
+                new_tiles[t] = self.board.draw_random_tile()
+                self.rack[t] = new_tiles[t]
+            else:
+                return False
+        return True
+
+class Human(Player):
+
     def play_word(self):
         """
         Plays a word on the board. Looks in the placed_tiles dictionary and checks
         if it's a word. If it is, then it plays the word and returns true.
         """
         tiles_played = []
-        new_tiles = {}
 
         for t in self.placed_tiles:
             row = self.placed_tiles[t][1][0]
@@ -51,15 +105,13 @@ class Player:
             self.score += self.board.compute_score(word_played)
             self.board.placed_cell_cleanup(word_played)
 
-            # get new tiles and put on rack
-            for t in self.placed_tiles:
-                new_tiles[t] = self.board.draw_random_tile()
-                self.rack[t] = new_tiles[t]
             return True
         else:
             return False
 
-    def play_word_computer(self):
+class Computer(Player):
+
+    def play_word(self):
         """
         Plays a word on the board for the computer player. Returns False if it was
         unable to retrieve enough new tiles.
@@ -95,47 +147,3 @@ class Player:
             else:
                 return False
         return True
-
-    def recall(self):
-        """
-        Recalls the tiles back to the player's rack.
-        Does not empty the placed_tiles dictionary.
-        """
-        for t in self.placed_tiles:
-            row = self.placed_tiles[t][1][0]
-            col = self.placed_tiles[t][1][1]
-            # remove tiles from board
-            self.board.board[row][col].letter = None
-            # put tiles back on rack
-            self.rack[t] = self.placed_tiles[t][0]
-
-    def init_rack(self):
-        """
-        Initializes the rack by drawing 7 tiles from the bag.
-        """
-        for i in range(7):
-            self.rack.append(self.board.draw_random_tile())
-
-
-    # exchanges the tiles that are in the "tiles_to_exchange" attribute
-    # returns true if one or more tiles were exchanged
-    def exchange_tiles(self):
-        """
-        Exchanges the tiles that are in the "tiles_to_exchange" attribute.
-        Returns true if one or more tiles were exchanged.
-        """
-        if len(self.tiles_to_exchange) != 0:
-            for tile_ind, tile_let in self.tiles_to_exchange.items():
-                # remove tile from rack
-                self.rack.remove(tile_let)
-                # put tile back in the bag and draw a new one
-                new_tile = self.board.exchange_tile(tile_let)
-                if new_tile != None:
-                    # put the tile in the rack where the previous one was
-                    self.rack.insert(tile_ind, new_tile)
-
-            # clear the tiles to exchange dictionary
-            self.tiles_to_exchange = {}
-            return True
-        else:
-            return False
