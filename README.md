@@ -37,7 +37,7 @@ the exchange tile button again. Exchanging tiles will cost you your turn.
 - [Kai Bailey](https://github.com/Kai-Bailey) - Software engineering student at the University of Alberta
 - [Cody Gramlich](https://github.com/CodyGramlich) - Software engineering student at the University of Alberta
 
-References:
+## References:
 
 - The computer player implemented is based on [The Worlds Fastest Scrabble Player](https://pdfs.semanticscholar.org/da31/cb24574f7c881a5dbf008e52aac7048c9d9c.pdf), a research paper from Andrew W. Appel and
 Guy J. Jacobson. The idea of reducing the game to 1 dimension by computing across/down checks and across/down sums was also
