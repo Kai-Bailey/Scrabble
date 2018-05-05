@@ -5,7 +5,7 @@ A recreation of the popular game of Scrabble with challenging compter player. Cr
 This project is a recreation of the popular game of scrabble. This game features a challenging computer player that users can test their skills against. When two computer players play against each other they consistently scores over 300 points per game. According to the Hasbro's website the top 300 players in the world "average between 330-450 points per game". Users can choose up to 4 players with any combination of computer players and human players. They can easily place, recall or exchange tiles. The user can see the score of each player, who's turn it is and the number of tiles left. If the user places an invalid word thier tiles will be automatically recalled.
 
 
-<a href="https://imgflip.com/gif/29p9xq"><img src="https://i.imgflip.com/29p9xq.gif" title="made at imgflip.com"/></a>
+<a href="https://imgflip.com/gif/29pael"><img src="https://i.imgflip.com/29pael.gif" title="made at imgflip.com" /></a>
 
 Two Computer Players Playing Against Each Other
 
