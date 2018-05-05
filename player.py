@@ -1,6 +1,6 @@
 class Player:
     """
-    The player class includes functionality such as placing tiles, drawing from the 
+    The player class includes functionality such as placing tiles, drawing from the
     bag and exchanging tiles. Parent class to Computer and Human.
     """
 
@@ -120,7 +120,7 @@ class Human(Player):
 
 class Computer(Player):
     """
-    Inherits from the player class adding the funcitonality of the play_word method. 
+    Inherits from the player class adding the functionality of the play_word method.
     The computer will be generating a word to play instead of reading input from the user.
     """
 
